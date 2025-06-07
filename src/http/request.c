@@ -28,7 +28,7 @@ StringView *http_path_get(HttpPathParams *params, StringView key) {
 #define BUF_CAP 8192
 
 bool http_request_init(HttpRequest *request, Allocator alloc) {
-    bzero(request, sizeof(*request));
+    memset(request, 0, sizeof(*request));
     request->ctx.alloc = alloc;
     request->body.alloc = alloc;
     http_headermap_init(&request->headers, alloc);

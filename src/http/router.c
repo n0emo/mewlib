@@ -9,7 +9,7 @@
 int compare_routes(const void *a, const void *b);
 
 void http_router_init(HttpRouter *router, void *user_data, Allocator alloc) {
-    bzero(router, sizeof(*router));
+    memset(router, 0, sizeof(*router));
     router->alloc = alloc;
     router->user_data = user_data;
     // TODO: default fallback

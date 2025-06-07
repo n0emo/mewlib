@@ -124,7 +124,7 @@ void alloc_buckets(HashMap *map, size_t count) {
     map->bucket_count = count;
     size_t size = bucket_size(map);
     map->buckets = mem_alloc(map->alloc, size * count);
-    bzero(map->buckets, size * count);
+    memset(map->buckets, 0, size * count);
 }
 
 void hashmap_expand(HashMap *map) {

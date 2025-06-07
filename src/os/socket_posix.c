@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <strings.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -28,7 +27,7 @@ mew_tcpstream_sendfile_t mew_tcpstream_native_sendfile;
 mew_tcpstream_close_t mew_tcpstream_native_close;
 
 void mew_tcplistener_init_default_native_options(MewNativeTcpListenerOptions *options) {
-    bzero(options, sizeof(*options));
+    memset(options, 0, sizeof(*options));
     options->reuse_address = true;
 }
 
@@ -104,7 +103,7 @@ bool mew_tcplistener_native_accept(void *data, MewTcpStream *stream) {
     int stream_sd = accept(sd, NULL, NULL);
     if (stream_sd == -1)
         return false;
-    bzero(stream, sizeof(*stream));
+    memset(stream, 0, sizeof(*stream));
     stream->data = (void *)(uintptr_t)stream_sd;
     stream->set_timeout = &mew_tcpstream_native_set_timeout;
     stream->read = &mew_tcpstream_native_read;

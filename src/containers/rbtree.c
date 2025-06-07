@@ -11,7 +11,7 @@ static RBTreeNode *rbtree_new_node(RBTree *tree, const void *element) {
         tree->oom = true;
     }
 
-    bzero(ptr, sizeof(RBTreeNode));
+    memset(ptr, 0, sizeof(RBTreeNode));
     memcpy(ptr->data, element, tree->element_size);
 
     return ptr;

@@ -4,7 +4,7 @@
 #include <string.h>
 
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
-    bzero(vec, sizeof(*vec));
+    memset(vec, 0, sizeof(*vec));
     vec->alloc = alloc;
     vec->element_size = element_size;
 }
