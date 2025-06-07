@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-RBTreeNode *rbtree_new_node(RBTree *tree, const void *element) {
+static RBTreeNode *rbtree_new_node(RBTree *tree, const void *element) {
     size_t size = sizeof(RBTreeNode) + tree->element_size;
     RBTreeNode *ptr = tree->alloc.ftable->alloc(tree->alloc.data, size);
 
@@ -47,7 +47,7 @@ void *rbtree_get(RBTree *tree, const void *element) {
     }
 }
 
-RBTreeNode *rbtree_bst_insert(RBTree *tree, RBTreeNode *node) {
+static RBTreeNode *rbtree_bst_insert(RBTree *tree, RBTreeNode *node) {
     RBTreeNode *iter = tree->root;
 
     while (true) {
@@ -112,7 +112,7 @@ void *rbtree_remove(RBTree *tree, const void *element) {
     assert(0 && "btree_remove is not implemented");
 }
 
-void rbtree_iterate_ascending_impl(RBTree *tree, RBTreeNode *node, btree_iter_f_t *iter_f) {
+static void rbtree_iterate_ascending_impl(RBTree *tree, RBTreeNode *node, btree_iter_f_t *iter_f) {
     if (node == NULL) {
         return;
     }

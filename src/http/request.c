@@ -107,7 +107,7 @@ bool read_request_header_lines(MewTcpStream stream, StringBuilder *header, Strin
             return false;
         }
 
-        sb_append_buf(header, buf, bytes);
+        sb_append_buf(header, buf, (size_t) bytes);
         sb_append_char(header, '\0');
         header->count--;
 

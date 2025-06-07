@@ -90,7 +90,7 @@ bool mew_tcplistener_native_bind(void *data, const char *host, uint16_t port) {
 
 bool mew_tcplistener_native_listen(void *data, uint32_t max_connections) {
     int sd = (int) (uintptr_t) data;
-    int ret = listen(sd, max_connections);
+    int ret = listen(sd, (int) max_connections);
     if (ret == -1) {
         log_error("Error listening: %s", strerror(errno));
         return false;
@@ -148,7 +148,7 @@ bool mew_tcpstream_native_sendfile(void *data, const char *path, uintptr_t size)
     int ret = sendfile(body_fd, sd, 0, &offset, NULL, 0);
     if (close(body_fd) < 0 || ret != 0) return false;
 #else
-    int ret = sendfile(sd, body_fd, NULL, size);
+    ptrdiff_t ret = sendfile(sd, body_fd, NULL, size);
     if (close(body_fd) < 0 || ret != (ssize_t) size) return false;
 #endif
 

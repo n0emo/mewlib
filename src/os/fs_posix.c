@@ -15,7 +15,7 @@ bool mew_fs_exists(const char *path) {
 bool mew_fs_get_size(const char *path, uintptr_t *size) {
     struct stat s;
     if (stat(path, &s) != 0) return false;
-    if (size != NULL) *size = s.st_size;
+    if (size != NULL) *size = (uintptr_t) s.st_size;
     return true;
 }
 

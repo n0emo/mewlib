@@ -31,9 +31,9 @@ char *mem_sprintf(Allocator allocator, const char *format, ...) {
     va_end(args);
 
     assert(size >= 0);
-    char *result = (char*)mem_alloc(allocator, size + 1);
+    char *result = (char*)mem_alloc(allocator, (size_t) size + 1);
     va_start(args, format);
-    vsnprintf(result, size + 1, format, args);
+    vsnprintf(result, (size_t) size + 1, format, args);
     va_end(args);
 
     return result;
@@ -48,7 +48,7 @@ void *mem_memdup(Allocator allocator, const void *mem, size_t size) {
 char *mem_strdup(Allocator allocator, const char *s) {
     size_t len = strlen(s);
     char *new = mem_alloc(allocator, len + 1);
-    strncpy(new, s, len);
+    memcpy(new, s, len);
     new[len] = '\0';
     return new;
 }

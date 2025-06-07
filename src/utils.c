@@ -15,7 +15,7 @@
 
 volatile sig_atomic_t interrupted = 0;
 
-void handle_sigint(int sig) {
+static void handle_sigint(int sig) {
     (void) sig;
     interrupted = 1;
 }

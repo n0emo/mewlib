@@ -25,7 +25,7 @@ bool try_serve_dir(HttpResponse *response, StringView file, StringView dir) {
     StringView sv = cstr_to_sv(path);
     ptrdiff_t i = sv_last_index_char(sv, '.');
     if (i != -1) {
-        StringView ext = sv_slice_from(sv, i + 1);
+        StringView ext = sv_slice_from(sv, (size_t) i + 1);
         const char *content_type = NULL;
 
         if (sv_eq_cstr(ext, "css")) {

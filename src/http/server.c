@@ -93,7 +93,7 @@ defer:
     return result;
 }
 
-bool serve_request(ThreadData *data) {
+static bool serve_request(ThreadData *data) {
     bool result = true;
 
     Arena arena = {0};

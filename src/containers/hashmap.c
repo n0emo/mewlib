@@ -27,7 +27,7 @@ void hashmap_init(HashMap *map, void *user_data, hashfunc_t *hashfunc, hashmap_e
 
 void hashmap_insert(HashMap *map, const void *key, const void *value) {
     map->element_count++;
-    if ((float) map->element_count / map->bucket_count  >= 0.75) {
+    if ((float) map->element_count / (float) map->bucket_count >= 0.75) {
         hashmap_expand(map);
     }
 
@@ -143,7 +143,7 @@ uint64_t hashmap_sv_hash(const void *value, void *user_data) {
     const StringView *sv = (const StringView *) value;
     uint64_t hash = 5381;
     for (size_t i = 0; i < sv->count; i++){
-        hash = ((hash << 5) + hash) + sv->items[i];
+        hash = ((hash << 5) + hash) + (uint64_t) sv->items[i];
     }
     return hash;
 }

@@ -3,8 +3,7 @@
 #define MEW_HTML_SHORT_TAGS
 #include <mew/html.h>
 
-// TODO: This example segfaults if compiled with GCC
-int main() {
+int main(void) {
     Html h = html_begin();
 
     h_head(h, ht_title(h, "My page"));

@@ -90,5 +90,5 @@ void http_route_fallback(HttpRouter *router, http_request_handle_func_t *handler
 int compare_routes(const void * a, const void * b) {
     HttpRoute *ra = (HttpRoute *) a;
     HttpRoute *rb = (HttpRoute *) b;
-    return rb->pattern_size - ra->pattern_size;
+    return (int) rb->pattern_size - (int) ra->pattern_size;
 }

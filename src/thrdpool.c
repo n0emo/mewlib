@@ -71,7 +71,7 @@ ThreadPoolJob queue_pop(ThreadPoolQueue *queue, bool *ok) {
     return result;
 }
 
-void *thread_func(void *arg) {
+static void *thread_func(void *arg) {
     ThreadPool *pool = (ThreadPool *) arg;
     pthread_t current_thrd = pthread_self();
 

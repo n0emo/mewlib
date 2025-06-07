@@ -58,9 +58,9 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
         return;
     }
 
-    for (ptrdiff_t i = vec->count; i >= (ptrdiff_t) index; i--) {
+    for (ptrdiff_t i = (ptrdiff_t) vec->count; i >= (ptrdiff_t) index; i--) {
         char *ptr = vec->data;
-        ptr += vec->element_size * i;
+        ptr += (ptrdiff_t) vec->element_size * i;
         memcpy(ptr, ptr - vec->element_size, vec->element_size);
     }
 
