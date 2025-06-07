@@ -29,7 +29,14 @@ typedef struct HashMap {
     HashMapBucket *buckets;
 } HashMap;
 
-void hashmap_init(HashMap *map, void *user_data, hashfunc_t *hashfunc, hashmap_equals_t *equals, size_t key_size, size_t value_size);
+void hashmap_init(
+    HashMap *map,
+    void *user_data,
+    hashfunc_t *hashfunc,
+    hashmap_equals_t *equals,
+    size_t key_size,
+    size_t value_size
+);
 void hashmap_insert(HashMap *map, const void *key, const void *value);
 bool hashmap_pop(HashMap *map, const void *key, void **found_key, void **value);
 void *hashmap_get(HashMap *map, const void *key);

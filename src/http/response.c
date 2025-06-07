@@ -7,21 +7,29 @@
 #include "mew/log.h"
 
 bool http_response_write(HttpResponse *response, MewTcpStream stream) {
-    if (!mew_tcpstream_write_cstr(stream, "HTTP/1.1 ")) return false;
+    if (!mew_tcpstream_write_cstr(stream, "HTTP/1.1 "))
+        return false;
     char status[5];
     snprintf(status, 5, "%d ", response->status);
-    if (!mew_tcpstream_write_cstr(stream, status)) return false;
-    if (!mew_tcpstream_write_cstr(stream, http_status_desc(response->status))) return false;
-    if (!mew_tcpstream_write_cstr(stream, "\r\n")) return false;
+    if (!mew_tcpstream_write_cstr(stream, status))
+        return false;
+    if (!mew_tcpstream_write_cstr(stream, http_status_desc(response->status)))
+        return false;
+    if (!mew_tcpstream_write_cstr(stream, "\r\n"))
+        return false;
 
     const HttpHeaderMapEntries *entries = &response->headers.entries;
     for (size_t i = 0; i < entries->count; i++) {
-        const HttpHeader *h = (const HttpHeader *) &entries->items[i].header;
+        const HttpHeader *h = (const HttpHeader *)&entries->items[i].header;
 
-        if (!mew_tcpstream_write(stream, h->key.items, h->key.count)) return false;
-        if (!mew_tcpstream_write_cstr(stream, ": ")) return false;
-        if (!mew_tcpstream_write(stream, h->value.items, h->value.count)) return false;
-        if (!mew_tcpstream_write_cstr(stream, "\r\n")) return false;
+        if (!mew_tcpstream_write(stream, h->key.items, h->key.count))
+            return false;
+        if (!mew_tcpstream_write_cstr(stream, ": "))
+            return false;
+        if (!mew_tcpstream_write(stream, h->value.items, h->value.count))
+            return false;
+        if (!mew_tcpstream_write_cstr(stream, "\r\n"))
+            return false;
     }
 
     size_t content_length = 0;
@@ -38,9 +46,12 @@ bool http_response_write(HttpResponse *response, MewTcpStream stream) {
 
     char buf[32];
     snprintf(buf, 32, "%zu", content_length);
-    if (!mew_tcpstream_write_cstr(stream, "Content-Length: ")) return false;
-    if (!mew_tcpstream_write_cstr(stream, buf)) return false;
-    if (!mew_tcpstream_write_cstr(stream, "\r\n\r\n")) return false;
+    if (!mew_tcpstream_write_cstr(stream, "Content-Length: "))
+        return false;
+    if (!mew_tcpstream_write_cstr(stream, buf))
+        return false;
+    if (!mew_tcpstream_write_cstr(stream, "\r\n\r\n"))
+        return false;
 
     switch (response->body.kind) {
         case RESPONSE_BODY_NONE:
@@ -49,14 +60,14 @@ bool http_response_write(HttpResponse *response, MewTcpStream stream) {
         case RESPONSE_BODY_BYTES: {
             StringBuilder *sb = &response->body.as.bytes;
             log_debug("Writing %zu bytes to response", sb->count);
-            if (mew_tcpstream_write(stream, sb->items, sb->count) < 0) return false;
+            if (mew_tcpstream_write(stream, sb->items, sb->count) < 0)
+                return false;
         } break;
         case RESPONSE_BODY_SENDFILE: {
             ResponseSendFile sf = response->body.as.sendfile;
             log_debug("Sending file %s with size %zu", sf.path, sf.size);
             mew_tcpstream_sendfile(stream, sf.path, sf.size);
-        };
-      break;
+        }; break;
     }
 
     return true;

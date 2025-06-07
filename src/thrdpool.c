@@ -1,9 +1,9 @@
 #include "mew/thrdpool.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "mew/log.h"
 
@@ -52,7 +52,8 @@ ThreadPoolJob queue_pop(ThreadPoolQueue *queue, bool *ok) {
     pthread_mutex_lock(&queue->mutex);
     while (queue->count == 0) {
         if (queue->about_to_destroy) {
-            if (ok != NULL) *ok = false;
+            if (ok != NULL)
+                *ok = false;
             return result;
         }
         pthread_cond_wait(&queue->not_empty, &queue->mutex);
@@ -67,24 +68,26 @@ ThreadPoolJob queue_pop(ThreadPoolQueue *queue, bool *ok) {
 
     pthread_mutex_unlock(&queue->mutex);
 
-    if (ok != NULL) *ok = true;
+    if (ok != NULL)
+        *ok = true;
     return result;
 }
 
 static void *thread_func(void *arg) {
-    ThreadPool *pool = (ThreadPool *) arg;
+    ThreadPool *pool = (ThreadPool *)arg;
     pthread_t current_thrd = pthread_self();
 
     pool->threads_alive += 1;
 
     while (!pool->cancel) {
         ThreadPoolJob job = queue_pop(&pool->queue, NULL);
-        if (pool->cancel) break;
+        if (pool->cancel)
+            break;
 
         int res = job.executor(job.arg);
 
         if (res != 0) {
-            log_error("Job returned status %d (thread %" PRIu64 ")", res, (uint64_t) current_thrd);
+            log_error("Job returned status %d (thread %" PRIu64 ")", res, (uint64_t)current_thrd);
         }
     }
 
@@ -118,6 +121,6 @@ void thrdpool_destroy(ThreadPool *pool) {
 }
 
 void thrdpool_add_job(ThreadPool *pool, JobExecutor *executor, void *arg) {
-    ThreadPoolJob job = { executor, arg, NULL };
+    ThreadPoolJob job = {executor, arg, NULL};
     queue_push(&pool->queue, job);
 }

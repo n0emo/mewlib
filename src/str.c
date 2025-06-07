@@ -6,13 +6,14 @@
 
 bool str_contains(const char *s, char c) {
     while (*s != '\0') {
-        if (*s == c) return true;
+        if (*s == c)
+            return true;
         s++;
     }
     return false;
 }
 
-void sb_append_char(StringBuilder *sb, char c)  {
+void sb_append_char(StringBuilder *sb, char c) {
     ARRAY_APPEND(sb, c, sb->alloc);
 }
 
@@ -23,7 +24,7 @@ void sb_append_buf(StringBuilder *sb, const char *buf, size_t size) {
 }
 
 void sb_append_cstr(StringBuilder *sb, const char *s) {
-    while(*s != '\0') {
+    while (*s != '\0') {
         sb_append_char(sb, *s);
         s++;
     }
@@ -79,12 +80,14 @@ bool sv_eq_cstr(StringView sv, const char *cstr) {
 }
 
 bool sv_eq_sv(StringView a, StringView b) {
-    if (a.count != b.count) return false;
+    if (a.count != b.count)
+        return false;
     return memcmp(a.items, b.items, a.count) == 0;
 }
 
 bool sv_starts_with(StringView sv, StringView prefix) {
-    if (sv.count < prefix.count) return false;
+    if (sv.count < prefix.count)
+        return false;
     return strncmp(sv.items, prefix.items, prefix.count) == 0;
 }
 
@@ -94,14 +97,16 @@ bool sv_starts_with_cstr(StringView sv, const char *prefix) {
 
 bool sv_contains(StringView sv, char c) {
     for (size_t i = 0; i < sv.count; i++) {
-        if (sv.items[i] == c) return true;
+        if (sv.items[i] == c)
+            return true;
     }
 
     return false;
 }
 
 StringView sv_slice(StringView sv, size_t start, size_t count) {
-    if (sv.count < start + count) return (StringView) {0};
+    if (sv.count < start + count)
+        return (StringView) {0};
 
     return (StringView) {
         .items = sv.items + start,
@@ -162,7 +167,7 @@ StringView sv_trim_right_to_cstr(StringView sv, const char *chars) {
 
 StringView sv_trim_space(StringView sv) {
     const char *chars = " \r\n\t";
-    return sv_trim_right_by_cstr(sv_trim_left_by_cstr( sv, chars), chars);
+    return sv_trim_right_by_cstr(sv_trim_left_by_cstr(sv, chars), chars);
 }
 
 StringView sv_chop_by(StringView *sv, char c) {
@@ -193,22 +198,24 @@ StringView sv_dup(Allocator alloc, StringView sv) {
 size_t sv_count_char(StringView sv, char c) {
     size_t count = 0;
     for (size_t i = 0; i < sv.count; i++) {
-        if (sv.items[i] == c) count++;
+        if (sv.items[i] == c)
+            count++;
     }
     return count;
 }
 
 ptrdiff_t sv_index_char(StringView sv, char c) {
-    for (ptrdiff_t i = 0; i < (ptrdiff_t) sv.count; i++) {
-        if (sv.items[i] == c) return i;
+    for (ptrdiff_t i = 0; i < (ptrdiff_t)sv.count; i++) {
+        if (sv.items[i] == c)
+            return i;
     }
     return -1;
 }
 
 ptrdiff_t sv_last_index_char(StringView sv, char c) {
-    for (ptrdiff_t i = (ptrdiff_t) sv.count - 1; i >= 0; i--) {
-        if (sv.items[i] == c) return i;
+    for (ptrdiff_t i = (ptrdiff_t)sv.count - 1; i >= 0; i--) {
+        if (sv.items[i] == c)
+            return i;
     }
     return -1;
 }
-

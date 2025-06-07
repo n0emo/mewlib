@@ -41,7 +41,8 @@ bool init_socket(HttpServer *server) {
         return_defer(false);
     }
 
-    if (server->settings.host == NULL) server->settings.host = "0.0.0.0";
+    if (server->settings.host == NULL)
+        server->settings.host = "0.0.0.0";
     if (!mew_tcplistener_bind(listener, server->settings.host, server->settings.port)) {
         return_defer(false);
     }
@@ -62,7 +63,8 @@ void http_server_destroy(HttpServer *server) {
 bool http_server_start(HttpServer *server) {
     signal(SIGPIPE, SIG_IGN);
 
-    if (!mew_tcplistener_listen(server->listener, 100)) return false;
+    if (!mew_tcplistener_listen(server->listener, 100))
+        return false;
 
     log_info("Serving at %s:%d", server->settings.host, server->settings.port);
 
@@ -75,7 +77,8 @@ bool accept_connection(HttpServer *server) {
     bool result = true;
     ThreadData *data = NULL;
     MewTcpStream stream;
-    if (!mew_tcplistener_accept(server->listener, &stream)) return_defer(false);
+    if (!mew_tcplistener_accept(server->listener, &stream))
+        return_defer(false);
 
     mew_tcpstream_set_timeout(stream, 120);
 
@@ -83,12 +86,13 @@ bool accept_connection(HttpServer *server) {
     data->stream = stream;
     data->server = server;
 
-    thrdpool_add_job(&server->thread_pool, handle_connection, (void *) data);
+    thrdpool_add_job(&server->thread_pool, handle_connection, (void *)data);
 
 defer:
     if (!result) {
         mew_tcpstream_close(stream);
-        if (data) free(data);
+        if (data)
+            free(data);
     }
     return result;
 }
@@ -118,9 +122,9 @@ defer:
 }
 
 int handle_connection(void *arg) {
-    ThreadData *data = (ThreadData *) arg;
+    ThreadData *data = (ThreadData *)arg;
 
-    while (serve_request(data)) { }
+    while (serve_request(data)) {}
 
     mew_tcpstream_close(data->stream);
     free(data);

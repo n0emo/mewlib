@@ -1,8 +1,8 @@
 #ifndef MEW_INCLUDE_MEW_CONTAINERS_RBTREE_H_
 #define MEW_INCLUDE_MEW_CONTAINERS_RBTREE_H_
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "mew/alloc.h"
 
@@ -10,7 +10,7 @@ typedef struct RBTree RBTree;
 typedef struct RBTreeNode RBTreeNode;
 
 typedef enum RBTreeColor {
-    RBTREE_RED   = 0,
+    RBTREE_RED = 0,
     RBTREE_BLACK = 1,
 } RBTreeColor;
 

@@ -31,9 +31,9 @@ char *mem_sprintf(Allocator allocator, const char *format, ...) {
     va_end(args);
 
     assert(size >= 0);
-    char *result = (char*)mem_alloc(allocator, (size_t) size + 1);
+    char *result = (char *)mem_alloc(allocator, (size_t)size + 1);
     va_start(args, format);
-    vsnprintf(result, (size_t) size + 1, format, args);
+    vsnprintf(result, (size_t)size + 1, format, args);
     va_end(args);
 
     return result;
@@ -56,22 +56,22 @@ char *mem_strdup(Allocator allocator, const char *s) {
 /*********************************** Malloc ***********************************/
 
 void *malloc_alloc(void *data, size_t bytes) {
-    (void) data;
+    (void)data;
     return malloc(bytes);
 }
 
 void malloc_free(void *data, void *ptr) {
-    (void) data;
+    (void)data;
     free(ptr);
 }
 
 void *malloc_calloc(void *data, size_t count, size_t size) {
-    (void) data;
+    (void)data;
     return calloc(count, size);
 }
 
 void *malloc_realloc(void *data, void *ptr, size_t bytes) {
-    (void) data;
+    (void)data;
     return realloc(ptr, bytes);
 }
 
@@ -85,13 +85,14 @@ Allocator new_malloc_allocator(void) {
 /*********************************** Arena ************************************/
 
 void *arena_alloc(void *data, size_t bytes) {
-    Arena *arena = (Arena *) data;
+    Arena *arena = (Arena *)data;
     size_t size = (bytes + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
 
     if (arena->begin == NULL) {
         assert(arena->end == NULL);
         size_t capacity = REGION_DEFAULT_CAPACITY;
-        if (capacity < size) capacity = size;
+        if (capacity < size)
+            capacity = size;
         arena->begin = new_region(capacity);
         arena->end = arena->begin;
     }
@@ -100,10 +101,11 @@ void *arena_alloc(void *data, size_t bytes) {
         arena->end = arena->end->next;
     }
 
-     if (arena->end->count + size > arena->end->capacity) {
+    if (arena->end->count + size > arena->end->capacity) {
         assert(arena->end->next == NULL);
         size_t capacity = REGION_DEFAULT_CAPACITY;
-        if (capacity < size) capacity = size;
+        if (capacity < size)
+            capacity = size;
         arena->end->next = new_region(capacity);
         arena->end = arena->end->next;
     }
@@ -114,20 +116,21 @@ void *arena_alloc(void *data, size_t bytes) {
 }
 
 void arena_free(void *data, void *ptr) {
-    (void) data;
-    (void) ptr;
+    (void)data;
+    (void)ptr;
 }
 
-void *arena_calloc(void* data, size_t count, size_t size) {
+void *arena_calloc(void *data, size_t count, size_t size) {
     void *new = arena_alloc(data, count * size);
-    if (new) bzero(new, count * size);
+    if (new)
+        bzero(new, count * size);
     return new;
 }
 
 void *arena_realloc(void *data, void *ptr, size_t bytes) {
-    (void) data;
-    (void) ptr;
-    (void) bytes;
+    (void)data;
+    (void)ptr;
+    (void)bytes;
     assert(0 && "Not implemented");
 }
 

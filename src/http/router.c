@@ -6,7 +6,7 @@
 #include "mew/str.h"
 #include "mew/utils.h"
 
-int compare_routes(const void * a, const void * b);
+int compare_routes(const void *a, const void *b);
 
 void http_router_init(HttpRouter *router, void *user_data, Allocator alloc) {
     bzero(router, sizeof(*router));
@@ -20,13 +20,15 @@ bool http_router_handle(HttpRouter *router, HttpRequest *request, HttpResponse *
 
     for (size_t i = 0; i < router->count; i++) {
         StringView path = request->ctx.path;
-        if (path.items[0] == '/') path = sv_slice_from(path, 1);
+        if (path.items[0] == '/')
+            path = sv_slice_from(path, 1);
         HttpRoute route = router->items[i];
         for (size_t j = 0; j < route.pattern_size; j++) {
             StringView segment = sv_chop_by(&path, '/');
             StringView pattern = route.pattern[j];
 
-            if (segment.count == 0 && path.count == 0) goto next;
+            if (segment.count == 0 && path.count == 0)
+                goto next;
 
             if (pattern.items[0] == ':') {
                 StringView key = sv_slice_from(pattern, 1);
@@ -34,9 +36,11 @@ bool http_router_handle(HttpRouter *router, HttpRequest *request, HttpResponse *
                 continue;
             }
 
-            if (!sv_eq_sv(segment, pattern)) goto next;
+            if (!sv_eq_sv(segment, pattern))
+                goto next;
         }
-        if (path.count > 0) goto next;
+        if (path.count > 0)
+            goto next;
         request->ctx.user_data = route.handler.user_data;
         return route.handler.handler(request, response);
     next:;
@@ -47,7 +51,7 @@ bool http_router_handle(HttpRouter *router, HttpRequest *request, HttpResponse *
 }
 
 void http_route_sv(HttpRouter *router, StringView path, http_request_handle_func_t *handler) {
-    http_route_handler_sv(router, path, (HttpRequestHandler) { handler, router->user_data });
+    http_route_handler_sv(router, path, (HttpRequestHandler) {handler, router->user_data});
 }
 
 void http_route_cstr(HttpRouter *router, const char *path, http_request_handle_func_t *handler) {
@@ -64,7 +68,8 @@ void http_route_handler_sv(HttpRouter *router, StringView path, HttpRequestHandl
     const char *pattern_ptr = pattern_sv.items;
 
     size_t len = sv_count_char(pattern_sv, '/') + 1;
-    if (pattern_sv.count == 0) len = 0;
+    if (pattern_sv.count == 0)
+        len = 0;
     StringView *pattern = mem_alloc(router->alloc, sizeof(StringView) * len);
     for (size_t i = 0; i < len; i++) {
         StringView segment = sv_chop_by(&pattern_sv, '/');
@@ -87,8 +92,8 @@ void http_route_fallback(HttpRouter *router, http_request_handle_func_t *handler
     router->fallback_data = user_data;
 }
 
-int compare_routes(const void * a, const void * b) {
-    HttpRoute *ra = (HttpRoute *) a;
-    HttpRoute *rb = (HttpRoute *) b;
-    return (int) rb->pattern_size - (int) ra->pattern_size;
+int compare_routes(const void *a, const void *b) {
+    HttpRoute *ra = (HttpRoute *)a;
+    HttpRoute *rb = (HttpRoute *)b;
+    return (int)rb->pattern_size - (int)ra->pattern_size;
 }

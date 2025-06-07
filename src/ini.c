@@ -12,8 +12,10 @@ bool parse_ini(StringView text, Ini *ini) {
         if (line.count == 0) {
             continue;
         } else if (line.items[0] == '[') {
-            if (line.count < 3) return false;
-            if (line.items[line.count - 1] != ']') return false;
+            if (line.count < 3)
+                return false;
+            if (line.items[line.count - 1] != ']')
+                return false;
             StringView section_name = sv_slice(line, 1, line.count - 2);
             IniSection section = {
                 .name = sv_trim_space(section_name),
@@ -27,16 +29,16 @@ bool parse_ini(StringView text, Ini *ini) {
             StringView key = sv_trim_space(sv_chop_by(&line, '='));
             StringView value = sv_trim_space(line);
 
-            if (value.count == 0) return false;
+            if (value.count == 0)
+                return false;
 
-            IniItem item = { .key = key, .value = value };
+            IniItem item = {.key = key, .value = value};
             ARRAY_APPEND(&current->items, item, ini->alloc);
         }
     }
 
     return true;
 }
-
 
 IniSection *ini_get_section(Ini ini, StringView name) {
     for (size_t i = 0; i < ini.sections.count; i++) {

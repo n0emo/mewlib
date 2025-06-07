@@ -1,7 +1,7 @@
 #include "mew/containers/vector.h"
 
-#include <string.h>
 #include <stddef.h>
+#include <string.h>
 
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
     bzero(vec, sizeof(*vec));
@@ -10,7 +10,8 @@ void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
 }
 
 void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
-    if (new_capacity < vec->capacity) return;
+    if (new_capacity < vec->capacity)
+        return;
 
     vec->capacity = new_capacity;
 
@@ -26,13 +27,15 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
 }
 
 void mew_vec_destroy(MewVector *vec) {
-    if (vec->data == NULL) return;
+    if (vec->data == NULL)
+        return;
 
     mem_free(vec->alloc, vec->data);
 }
 
 void *mew_vec_get(MewVector *vec, size_t index) {
-    if (index >= vec->count) return NULL;
+    if (index >= vec->count)
+        return NULL;
 
     return vec + index;
 }
@@ -58,9 +61,9 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
         return;
     }
 
-    for (ptrdiff_t i = (ptrdiff_t) vec->count; i >= (ptrdiff_t) index; i--) {
+    for (ptrdiff_t i = (ptrdiff_t)vec->count; i >= (ptrdiff_t)index; i--) {
         char *ptr = vec->data;
-        ptr += (ptrdiff_t) vec->element_size * i;
+        ptr += (ptrdiff_t)vec->element_size * i;
         memcpy(ptr, ptr - vec->element_size, vec->element_size);
     }
 
@@ -71,7 +74,8 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
 }
 
 void mew_vec_delete_at(MewVector *vec, size_t index) {
-    if (index >= vec->count) return;
+    if (index >= vec->count)
+        return;
 
     vec->count--;
 
@@ -81,4 +85,3 @@ void mew_vec_delete_at(MewVector *vec, size_t index) {
         memcpy(ptr, ptr + vec->element_size, vec->element_size);
     }
 }
-

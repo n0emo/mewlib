@@ -1,12 +1,11 @@
 #ifndef MEW_INCLUDE_MEW_THRDPOOL_H_
 #define MEW_INCLUDE_MEW_THRDPOOL_H_
 
+#include <pthread.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 
-#include <pthread.h>
-
-typedef int (JobExecutor)(void *arg);
+typedef int(JobExecutor)(void *arg);
 
 typedef struct ThreadPoolJob {
     JobExecutor *executor;

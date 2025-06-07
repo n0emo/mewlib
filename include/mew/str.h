@@ -23,7 +23,7 @@ void sb_append_sv(StringBuilder *sb, StringView sv);
 void sb_append_sb(StringBuilder *sb, StringBuilder other);
 
 #define SV_FMT "%.*s"
-#define SV_ARG(sv) (int) (sv).count, (sv).items
+#define SV_ARG(sv) (int)(sv).count, (sv).items
 
 struct StringView {
     const char *items;
@@ -41,7 +41,7 @@ bool sv_starts_with(StringView sv, StringView prefix);
 bool sv_starts_with_cstr(StringView sv, const char *prefix);
 StringView sv_slice(StringView sv, size_t start, size_t count);
 StringView sv_slice_from(StringView sv, size_t index);
-StringView sv_trim_right_by_cstr(StringView sv,const char *chars);
+StringView sv_trim_right_by_cstr(StringView sv, const char *chars);
 StringView sv_trim_left_by_cstr(StringView sv, const char *chars);
 StringView sv_trim_left_to_cstr(StringView sv, const char *chars);
 StringView sv_trim_right_to_cstr(StringView sv, const char *chars);

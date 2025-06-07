@@ -16,7 +16,7 @@
 volatile sig_atomic_t interrupted = 0;
 
 static void handle_sigint(int sig) {
-    (void) sig;
+    (void)sig;
     interrupted = 1;
 }
 
@@ -32,4 +32,3 @@ void wait_for_ctrl_c(void) {
         pause();
     }
 }
-

@@ -16,7 +16,7 @@ typedef struct MewThread {
     uint64_t data;
 } MewThread;
 
-typedef int (mew_thread_func_t)(void *arg);
+typedef int(mew_thread_func_t)(void *arg);
 
 /**
  * @brief Create and run an ew thread

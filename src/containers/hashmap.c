@@ -14,7 +14,14 @@ void hashmap_expand(HashMap *map);
 size_t bucket_size(HashMap *map);
 bool map_equals(HashMap *map, const void *a, const void *b);
 
-void hashmap_init(HashMap *map, void *user_data, hashfunc_t *hashfunc, hashmap_equals_t *equals, size_t key_size, size_t value_size) {
+void hashmap_init(
+    HashMap *map,
+    void *user_data,
+    hashfunc_t *hashfunc,
+    hashmap_equals_t *equals,
+    size_t key_size,
+    size_t value_size
+) {
     map->alloc = new_malloc_allocator();
     map->user_data = user_data;
     map->hashfunc = hashfunc;
@@ -27,11 +34,11 @@ void hashmap_init(HashMap *map, void *user_data, hashfunc_t *hashfunc, hashmap_e
 
 void hashmap_insert(HashMap *map, const void *key, const void *value) {
     map->element_count++;
-    if ((float) map->element_count / (float) map->bucket_count >= 0.75) {
+    if ((float)map->element_count / (float)map->bucket_count >= 0.75) {
         hashmap_expand(map);
     }
 
-    uint64_t hash = map->hashfunc((void *) key, map->user_data);
+    uint64_t hash = map->hashfunc((void *)key, map->user_data);
     size_t index = hash % map->bucket_count;
     size_t map_index = index;
     while (true) {
@@ -56,24 +63,31 @@ void hashmap_insert(HashMap *map, const void *key, const void *value) {
 
 void *hashmap_get(HashMap *map, const void *key) {
     HashMapBucket *bucket = get_bucket_for_key(map, key);
-    if (bucket == NULL) return NULL;
-    else return bucket->data + map->key_size;
+    if (bucket == NULL)
+        return NULL;
+    else
+        return bucket->data + map->key_size;
 }
 
 bool hashmap_pop(HashMap *map, const void *key, void **found_key, void **value) {
     HashMapBucket *bucket = get_bucket_for_key(map, key);
-    if (bucket == NULL) return false;
+    if (bucket == NULL)
+        return false;
     bucket->initialized = false;
-    if (found_key != NULL) *found_key = bucket->data;
-    if (value != NULL) *value = bucket->data + map->key_size;
+    if (found_key != NULL)
+        *found_key = bucket->data;
+    if (value != NULL)
+        *value = bucket->data + map->key_size;
     return true;
 }
 
 bool hashmap_iterate(HashMap *map, hashmap_iter_t iter) {
     for (size_t i = 0; i < map->bucket_count; i++) {
         HashMapBucket *bucket = &map->buckets[i];
-        if (!bucket->initialized) continue;
-        if (!iter(bucket->data, bucket->data + map->key_size, map->user_data)) return false;
+        if (!bucket->initialized)
+            continue;
+        if (!iter(bucket->data, bucket->data + map->key_size, map->user_data))
+            return false;
     }
     return true;
 }
@@ -84,11 +98,11 @@ size_t round_to(size_t value, size_t roundTo) {
 
 HashMapBucket *get_bucket_for_index(HashMap *map, size_t index) {
     size_t size = bucket_size(map);
-    return (HashMapBucket *) ((char *) map->buckets + size * index);
+    return (HashMapBucket *)((char *)map->buckets + size * index);
 }
 
 HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
-    uint64_t hash = map->hashfunc((void *) key, map->user_data);
+    uint64_t hash = map->hashfunc((void *)key, map->user_data);
     size_t index = hash % map->bucket_count;
     size_t map_index = index;
     while (true) {
@@ -120,7 +134,7 @@ void hashmap_expand(HashMap *map) {
     alloc_buckets(map, old_count * 2);
     map->element_count = 0;
     for (size_t i = 0; i < old_count; i++) {
-        HashMapBucket *bucket = (HashMapBucket *) ((char *) old_buckets + size * i);
+        HashMapBucket *bucket = (HashMapBucket *)((char *)old_buckets + size * i);
         if (bucket->initialized) {
             hashmap_insert(map, bucket->data, bucket->data + map->key_size);
         }
@@ -133,24 +147,23 @@ size_t bucket_size(HashMap *map) {
 }
 
 bool map_equals(HashMap *map, const void *a, const void *b) {
-    return (map->equals != NULL && map->equals(a, b, map->user_data))
-        || memcmp(a, b, map->key_size) == 0;
+    return (map->equals != NULL && map->equals(a, b, map->user_data)) || memcmp(a, b, map->key_size) == 0;
 }
 
 // djb2 hash algorithm
 uint64_t hashmap_sv_hash(const void *value, void *user_data) {
-    (void) user_data;
-    const StringView *sv = (const StringView *) value;
+    (void)user_data;
+    const StringView *sv = (const StringView *)value;
     uint64_t hash = 5381;
-    for (size_t i = 0; i < sv->count; i++){
-        hash = ((hash << 5) + hash) + (uint64_t) sv->items[i];
+    for (size_t i = 0; i < sv->count; i++) {
+        hash = ((hash << 5) + hash) + (uint64_t)sv->items[i];
     }
     return hash;
 }
 
 bool hashmap_sv_equals(const void *a, const void *b, void *user_data) {
-    (void) user_data;
-    const StringView *sva = (const StringView *) a;
-    const StringView *svb = (const StringView *) b;
+    (void)user_data;
+    const StringView *sva = (const StringView *)a;
+    const StringView *svb = (const StringView *)b;
     return sv_eq_sv(*sva, *svb);
 }

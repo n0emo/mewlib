@@ -85,7 +85,7 @@ void html_text(Html *html, StringView sv) {
 }
 
 void html_hyperlink(Html *html, StringView text, StringView href) {
-    html_push_attribute(html, (Attribute) { .name = cstr_to_sv("href"), .value = href });
+    html_push_attribute(html, (Attribute) {.name = cstr_to_sv("href"), .value = href});
     html_a_begin(html);
     html_text(html, text);
     html_a_end(html);
@@ -106,10 +106,16 @@ void html_title_cstr(Html *html, const char *title) {
     html_title(html, cstr_to_sv(title));
 }
 
-#define X(tag) \
-    void html_ ## tag ## _begin (Html *html) { html_tag_begin(html, #tag); } \
-    void html_ ## tag ## _end (Html *html) { html_tag_end(html, #tag); } \
-    void html_ ## tag ## _short (Html *html) { html_tag_short(html, #tag); }
+#define X(tag)                                                                                                         \
+    void html_##tag##_begin(Html *html) {                                                                              \
+        html_tag_begin(html, #tag);                                                                                    \
+    }                                                                                                                  \
+    void html_##tag##_end(Html *html) {                                                                                \
+        html_tag_end(html, #tag);                                                                                      \
+    }                                                                                                                  \
+    void html_##tag##_short(Html *html) {                                                                              \
+        html_tag_short(html, #tag);                                                                                    \
+    }
 HTML_TAG_LIST
 #undef X
 

@@ -23,6 +23,7 @@ typedef struct {
 typedef struct {
     Allocator alloc;
     ResponseBodyKind kind;
+
     union {
         StringBuilder bytes;
         ResponseSendFile sendfile;

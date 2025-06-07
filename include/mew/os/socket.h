@@ -11,10 +11,10 @@ typedef struct MewTcpStream MewTcpStream;
 
 /********************************** TcpListener ************************************/
 
-typedef bool (mew_tcplistener_bind_t)(void *data, const char *host, uint16_t port);
-typedef bool (mew_tcplistener_listen_t)(void *data, uint32_t max_connections);
-typedef bool (mew_tcplistener_accept_t)(void *data, MewTcpStream *stream);
-typedef bool (mew_tcplistener_close_t)(void *data);
+typedef bool(mew_tcplistener_bind_t)(void *data, const char *host, uint16_t port);
+typedef bool(mew_tcplistener_listen_t)(void *data, uint32_t max_connections);
+typedef bool(mew_tcplistener_accept_t)(void *data, MewTcpStream *stream);
+typedef bool(mew_tcplistener_close_t)(void *data);
 
 struct MewTcpListener {
     void *data;
@@ -49,14 +49,13 @@ typedef struct MewNativeTcpListenerOptions {
 void mew_tcplistener_init_default_native_options(MewNativeTcpListenerOptions *options);
 bool mew_tcplistener_init_native(MewTcpListener *sock, MewNativeTcpListenerOptions options);
 
-
 /**********************************  TcpStream  ************************************/
 
-typedef bool (mew_tcpstream_set_timeout_t)(void *data, uint32_t seconds);
-typedef ptrdiff_t (mew_tcpstream_read_t)(void *data, char *buf, uintptr_t size);
-typedef ptrdiff_t (mew_tcpstream_write_t)(void *data, const char *buf, uintptr_t size);
-typedef bool (mew_tcpstream_sendfile_t)(void *data, const char *path, uintptr_t size);
-typedef bool (mew_tcpstream_close_t)(void *data);
+typedef bool(mew_tcpstream_set_timeout_t)(void *data, uint32_t seconds);
+typedef ptrdiff_t(mew_tcpstream_read_t)(void *data, char *buf, uintptr_t size);
+typedef ptrdiff_t(mew_tcpstream_write_t)(void *data, const char *buf, uintptr_t size);
+typedef bool(mew_tcpstream_sendfile_t)(void *data, const char *path, uintptr_t size);
+typedef bool(mew_tcpstream_close_t)(void *data);
 
 struct MewTcpStream {
     void *data;
@@ -67,7 +66,6 @@ struct MewTcpStream {
     mew_tcpstream_sendfile_t *sendfile;
     mew_tcpstream_close_t *close;
 };
-
 
 static inline bool mew_tcpstream_set_timeout(MewTcpStream stream, uint32_t seconds) {
     return stream.set_timeout(stream.data, seconds);

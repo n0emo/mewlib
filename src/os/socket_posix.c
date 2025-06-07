@@ -1,17 +1,16 @@
-#include "mew/os/socket.h"
-
-#include <fcntl.h>
-#include <strings.h>
-#include <errno.h>
-
 #include <arpa/inet.h>
-#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <strings.h>
 #include <sys/socket.h>
+#include <unistd.h>
+
+#include "mew/os/socket.h"
 
 #ifndef __APPLE__
-#include <sys/sendfile.h>
+    #include <sys/sendfile.h>
 #endif
 
 #include "mew/log.h"
@@ -51,7 +50,7 @@ bool mew_tcplistener_init_native(MewTcpListener *listener, MewNativeTcpListenerO
         }
     }
 
-    listener->data = (void *) (uintptr_t) sd;
+    listener->data = (void *)(uintptr_t)sd;
     listener->bind = &mew_tcplistener_native_bind;
     listener->listen = &mew_tcplistener_native_listen;
     listener->accept = &mew_tcplistener_native_accept;
@@ -59,18 +58,19 @@ bool mew_tcplistener_init_native(MewTcpListener *listener, MewNativeTcpListenerO
     return true;
 
 defer:
-    if (sd != -1) close(sd);
+    if (sd != -1)
+        close(sd);
     return result;
 }
 
 bool mew_tcplistener_native_bind(void *data, const char *host, uint16_t port) {
     int ret;
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_port = htons(port),
-        .sin_zero = { 0 },
+        .sin_zero = {0},
     };
 
     ret = inet_pton(AF_INET, host, &addr.sin_addr);
@@ -79,7 +79,7 @@ bool mew_tcplistener_native_bind(void *data, const char *host, uint16_t port) {
         return false;
     }
 
-    ret = bind(sd, (struct sockaddr *) &addr, sizeof(addr));
+    ret = bind(sd, (struct sockaddr *)&addr, sizeof(addr));
     if (ret == -1) {
         log_error("Error binding socket: %s", strerror(errno));
         return false;
@@ -89,8 +89,8 @@ bool mew_tcplistener_native_bind(void *data, const char *host, uint16_t port) {
 }
 
 bool mew_tcplistener_native_listen(void *data, uint32_t max_connections) {
-    int sd = (int) (uintptr_t) data;
-    int ret = listen(sd, (int) max_connections);
+    int sd = (int)(uintptr_t)data;
+    int ret = listen(sd, (int)max_connections);
     if (ret == -1) {
         log_error("Error listening: %s", strerror(errno));
         return false;
@@ -100,11 +100,12 @@ bool mew_tcplistener_native_listen(void *data, uint32_t max_connections) {
 }
 
 bool mew_tcplistener_native_accept(void *data, MewTcpStream *stream) {
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
     int stream_sd = accept(sd, NULL, NULL);
-    if (stream_sd == -1) return false;
+    if (stream_sd == -1)
+        return false;
     bzero(stream, sizeof(*stream));
-    stream->data = (void *) (uintptr_t) stream_sd;
+    stream->data = (void *)(uintptr_t)stream_sd;
     stream->set_timeout = &mew_tcpstream_native_set_timeout;
     stream->read = &mew_tcpstream_native_read;
     stream->write = &mew_tcpstream_native_write;
@@ -114,48 +115,52 @@ bool mew_tcplistener_native_accept(void *data, MewTcpStream *stream) {
 }
 
 bool mew_tcplistener_native_close(void *data) {
-    int sd = (int) (uintptr_t) data;
-    if (sd == -1) return true;
+    int sd = (int)(uintptr_t)data;
+    if (sd == -1)
+        return true;
     return (close(sd) == 0);
 }
 
 bool mew_tcpstream_native_set_timeout(void *data, uint32_t seconds) {
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
     struct timeval tv;
     tv.tv_sec = seconds;
     tv.tv_usec = 0;
-    int ret = setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    int ret = setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
     return ret != -1;
 }
 
 ptrdiff_t mew_tcpstream_native_read(void *data, char *buf, uintptr_t size) {
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
     return recv(sd, buf, size, 0);
 }
 
 ptrdiff_t mew_tcpstream_native_write(void *data, const char *buf, uintptr_t size) {
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
     return write(sd, buf, size);
 }
 
 bool mew_tcpstream_native_sendfile(void *data, const char *path, uintptr_t size) {
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
     int body_fd = open(path, O_RDONLY);
-    if (body_fd < 0) return false;
+    if (body_fd < 0)
+        return false;
 
 #ifdef __APPLE__
-    off_t offset = (off_t) size;
+    off_t offset = (off_t)size;
     int ret = sendfile(body_fd, sd, 0, &offset, NULL, 0);
-    if (close(body_fd) < 0 || ret != 0) return false;
+    if (close(body_fd) < 0 || ret != 0)
+        return false;
 #else
     ptrdiff_t ret = sendfile(sd, body_fd, NULL, size);
-    if (close(body_fd) < 0 || ret != (ssize_t) size) return false;
+    if (close(body_fd) < 0 || ret != (ssize_t)size)
+        return false;
 #endif
 
     return true;
 }
 
 bool mew_tcpstream_native_close(void *data) {
-    int sd = (int) (uintptr_t) data;
+    int sd = (int)(uintptr_t)data;
     return close(sd) == 0;
 }

@@ -5,11 +5,11 @@
 #ifndef MEW_INCLUDE_MEW_HTTP_ROUTER_H_
 #define MEW_INCLUDE_MEW_HTTP_ROUTER_H_
 
+#include <stddef.h>
+
 #include "mew/alloc.h"
 #include "mew/http/handler.h"
 #include "mew/str.h"
-
-#include <stddef.h>
 
 typedef struct HttpRoute {
     const char *pattern_ptr;
@@ -38,14 +38,10 @@ void http_route_handler_sv(HttpRouter *router, StringView path, HttpRequestHandl
 void http_route_handler_cstr(HttpRouter *router, const char *path, HttpRequestHandler handler);
 void http_route_fallback(HttpRouter *router, http_request_handle_func_t *handler, void *user_data);
 
-#define http_route(router, path, handler) _Generic((path), \
-    StringView: http_route_sv, \
-    char *: http_route_cstr \
-)(router, path, handler)
+#define http_route(router, path, handler)                                                                              \
+    _Generic((path), StringView: http_route_sv, char *: http_route_cstr)(router, path, handler)
 
-#define http_route_handler(router, path, handler) _Generic((path), \
-    StringView: http_route_handler_sv, \
-    char *: http_route_handler_cstr \
-)(router, path, handler)
+#define http_route_handler(router, path, handler)                                                                      \
+    _Generic((path), StringView: http_route_handler_sv, char *: http_route_handler_cstr)(router, path, handler)
 
 #endif // MEW_INCLUDE_MEW_HTTP_ROUTER_H_
