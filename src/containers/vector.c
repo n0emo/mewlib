@@ -1,15 +1,21 @@
 #include "mew/containers/vector.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
+    assert(vec != NULL);
+    assert(element_size != 0);
+
     memset(vec, 0, sizeof(*vec));
     vec->alloc = alloc;
     vec->element_size = element_size;
 }
 
 void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
+    assert(vec != NULL);
+
     if (new_capacity < vec->capacity)
         return;
 
@@ -23,6 +29,8 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
 }
 
 void mew_vec_destroy(MewVector *vec) {
+    assert(vec != NULL);
+
     if (vec->data == NULL)
         return;
 
@@ -30,13 +38,19 @@ void mew_vec_destroy(MewVector *vec) {
 }
 
 void *mew_vec_get(MewVector *vec, size_t index) {
-    if (index >= vec->count)
-        return NULL;
+    assert(vec != NULL);
 
-    return vec + index;
+    if (index >= vec->count) {
+        return NULL;
+    }
+
+    return vec->data + index * vec->element_size;
 }
 
 void mew_vec_push(MewVector *vec, const void *element) {
+    assert(vec != NULL);
+    assert(element != NULL);
+
     if (vec->count == vec->capacity) {
         mew_vec_reserve(vec, vec->capacity * 2);
     }
@@ -47,14 +61,20 @@ void mew_vec_push(MewVector *vec, const void *element) {
     vec->count++;
 }
 
+#include <stdio.h>
+
 void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
-    if (vec->count == vec->capacity) {
-        mew_vec_reserve(vec, vec->capacity * 2);
-    }
+    assert(vec != NULL);
+    assert(element != NULL);
+    assert(index <= vec->count);
 
     if (index == vec->count) {
         mew_vec_push(vec, element);
         return;
+    }
+
+    if (vec->count == vec->capacity) {
+        mew_vec_reserve(vec, vec->capacity * 2);
     }
 
     for (ptrdiff_t i = (ptrdiff_t)vec->count; i >= (ptrdiff_t)index; i--) {
@@ -70,6 +90,8 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
 }
 
 void mew_vec_delete_at(MewVector *vec, size_t index) {
+    assert(vec != NULL);
+
     if (index >= vec->count)
         return;
 

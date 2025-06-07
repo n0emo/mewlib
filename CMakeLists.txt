@@ -5,6 +5,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(mew)
 
 add_compile_options(
+    -g
+
     -Wall
     -Wextra
     -Werror
@@ -22,8 +24,8 @@ add_compile_options(
     -fstack-protector-strong
     -D_FORTIFY_SOURCE=2
 
-    $<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes>
-    $<$<COMPILE_LANGUAGE:C>:-Wmissing-prototypes>
+    -Wstrict-prototypes
+    -Wmissing-prototypes
 
     $<$<NOT:$<CONFIG:Debug>>:-O2>
 )
@@ -40,4 +42,6 @@ endmacro()
 define_example(html-basic "examples/html/basic.c")
 define_example(html-controlflow "examples/html/controlflow.c")
 define_example(html-attributes "examples/html/attributes.c")
+
+define_example(containers-vector "examples/containers/vector.c")
 
