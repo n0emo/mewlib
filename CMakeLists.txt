@@ -14,4 +14,6 @@ macro(define_example name src)
 endmacro()
 
 define_example(html-basic "examples/html/basic.c")
+define_example(html-controlflow "examples/html/controlflow.c")
+define_example(html-attributes "examples/html/attributes.c")
 

@@ -179,7 +179,7 @@ void html_title_cstr(Html *html, const char *title);
 #define html_element(html, element, ...) \
     do { \
         html_ ## element ## _begin(html); \
-        __VA_ARGS__ \
+        __VA_ARGS__; \
         html_ ## element ## _end(html); \
     } while(0)
 
@@ -195,6 +195,13 @@ HTML_TAG_LIST
     const Html* : html, \
     Html        : &html \
 )
+
+#define MEW_HTML_TEXT_AUTOSV(text) _Generic((text), \
+    const char*   : cstr_to_sv,  \
+    char*         : cstr_to_sv,  \
+    StringBuilder : sb_to_sv,    \
+    default       : sv_identity  \
+)(text)
 
 #ifdef MEW_HTML_SHORT_TAGS
 #define h_a(html, ...) html_element(MEW_HTML_AUTOPTR(html), a, __VA_ARGS__)
@@ -321,6 +328,13 @@ HTML_TAG_LIST
 #define h_var(html, ...) html_element(MEW_HTML_AUTOPTR(html), var, __VA_ARGS__)
 #define h_video(html, ...) html_element(MEW_HTML_AUTOPTR(html), video, __VA_ARGS__)
 #define h_w(html, ...) html_element(MEW_HTML_AUTOPTR(html), wbr, __VA_ARGS__)
+
+#define ht_text(html, ...) html_text(MEW_HTML_AUTOPTR(html), MEW_HTML_TEXT_AUTOSV(__VA_ARGS__))
+#define ht_title(html, ...) h_title(html, ht_text(html, __VA_ARGS__))
+#define ht_attr(html, name, ...) \
+    html_push_attribute(MEW_HTML_AUTOPTR(html), \
+    (Attribute) { MEW_HTML_TEXT_AUTOSV(name), MEW_HTML_TEXT_AUTOSV(__VA_ARGS__) })
+#define ht_class(html, ...) html_push_class(MEW_HTML_AUTOPTR(html), MEW_HTML_TEXT_AUTOSV(__VA_ARGS__))
 #endif
 
 void html_append_current_indentation(Html *html);

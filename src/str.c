@@ -51,6 +51,10 @@ StringView sb_to_sv(StringBuilder sb) {
     };
 }
 
+StringView sv_identity(StringView sv) {
+    return sv;
+}
+
 int sv_cmp(StringView a, StringView b) {
     size_t min_size = a.count > b.count ? b.count : a.count;
 
@@ -207,3 +211,4 @@ ptrdiff_t sv_last_index_char(StringView sv, char c) {
     }
     return -1;
 }
+
