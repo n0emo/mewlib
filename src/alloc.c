@@ -20,8 +20,12 @@ void *mem_calloc(Allocator allocator, size_t count, size_t size) {
     return allocator.ftable->calloc(allocator.data, count, size);
 }
 
-void *mem_realloc(Allocator allocator, void *ptr, size_t bytes) {
-    return allocator.ftable->realloc(allocator.data, ptr, bytes);
+void *mem_realloc(Allocator allocator, void *ptr, size_t old_size, size_t new_size) {
+    if (new_size <= old_size) {
+        return ptr;
+    }
+
+    return allocator.ftable->realloc(allocator.data, ptr, old_size, new_size);
 }
 
 char *mem_sprintf(Allocator allocator, const char *format, ...) {
@@ -70,9 +74,11 @@ void *malloc_calloc(void *data, size_t count, size_t size) {
     return calloc(count, size);
 }
 
-void *malloc_realloc(void *data, void *ptr, size_t bytes) {
+void *malloc_realloc(void *data, void *ptr, size_t old_size, size_t new_size) {
     (void)data;
-    return realloc(ptr, bytes);
+    (void) old_size;
+
+    return realloc(ptr, new_size);
 }
 
 Allocator new_malloc_allocator(void) {
@@ -122,16 +128,18 @@ void arena_free(void *data, void *ptr) {
 
 void *arena_calloc(void *data, size_t count, size_t size) {
     void *new = arena_alloc(data, count * size);
-    if (new)
-        bzero(new, count * size);
+    if (new) {
+        memset(new, 0, count * size);
+    }
+
     return new;
 }
 
-void *arena_realloc(void *data, void *ptr, size_t bytes) {
-    (void)data;
-    (void)ptr;
-    (void)bytes;
-    assert(0 && "Not implemented");
+void *arena_realloc(void *data, void *ptr, size_t old_size, size_t new_size) {
+    void *new = arena_alloc(data, new_size);
+    memcpy(new, ptr, old_size);
+
+    return new;
 }
 
 Allocator new_arena_allocator(Arena *arena) {
