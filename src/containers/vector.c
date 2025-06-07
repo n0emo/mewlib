@@ -13,17 +13,13 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
     if (new_capacity < vec->capacity)
         return;
 
-    vec->capacity = new_capacity;
-
     if (vec->data == NULL) {
         vec->data = mem_alloc(vec->alloc, new_capacity * vec->element_size);
     } else {
-        // TODO: realloc
-        void *new_data = mem_alloc(vec->alloc, new_capacity * vec->element_size);
-        memcpy(new_data, vec->data, vec->capacity);
-        mem_free(vec->alloc, vec->data);
-        vec->data = new_data;
+        vec->data = mem_realloc(vec->alloc, vec->data, vec->capacity, new_capacity);
     }
+
+    vec->capacity = new_capacity;
 }
 
 void mew_vec_destroy(MewVector *vec) {
