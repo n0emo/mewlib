@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.1...3.10)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-enable_testing()
-
 project(mew)
+
+include(CTest)
+enable_testing()
 
 add_subdirectory(tests)
 
@@ -26,15 +27,21 @@ add_compile_options(
     -Warray-bounds
     -Wnull-dereference
     -fstack-protector-strong
-    -D_FORTIFY_SOURCE=2
 
     -Wstrict-prototypes
     -Wmissing-prototypes
 
     $<$<NOT:$<CONFIG:Debug>>:-O2>
+    $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>
 )
 
 add_library(mew STATIC ./src/all.c)
+
+if(DEBUG)
+    target_compile_options(mew PRIVATE --coverage)
+    target_link_options(mew PRIVATE --coverage)
+    target_link_libraries(mew PRIVATE gcov)
+endif()
 
 target_include_directories(mew PUBLIC ./include/)
 
