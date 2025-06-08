@@ -123,6 +123,12 @@ TEST(vector_delete_at, {
         is_uint64_t_array_equals(&vector, (uint64_t[]) {1, 3})
     );
 
+    mew_vec_delete_at(&vector, 123);
+    mewassert(
+        "Vector delete_at with invalid index does nothing",
+        is_uint64_t_array_equals(&vector, (uint64_t[]) {1, 3})
+    );
+
     mew_vec_destroy(&vector);
 })
 

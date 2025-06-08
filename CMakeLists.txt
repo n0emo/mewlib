@@ -37,11 +37,9 @@ add_compile_options(
 
 add_library(mew STATIC ./src/all.c)
 
-if(DEBUG)
-    target_compile_options(mew PRIVATE --coverage)
-    target_link_options(mew PRIVATE --coverage)
-    target_link_libraries(mew PRIVATE gcov)
-endif()
+target_compile_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
+target_link_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
+target_link_libraries(mew PRIVATE $<$<CONFIG:Debug>:gcov>)
 
 target_include_directories(mew PUBLIC ./include/)
 

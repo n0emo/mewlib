@@ -22,10 +22,10 @@ test: build
     ctest --output-on-failure
 
 [working-directory: 'build']
-coverage: configure-gcc test
+coverage: clean configure-gcc-debug test
     ctest -T Coverage
-    find . -name '*.gcda' -not -path "./tests/*" | xargs gcov
-    lcov --directory . --capture --output-file coverage.info --exclude "tests/*"
+    find . -name '*.gcda' | xargs gcov
+    lcov --directory . --capture --output-file coverage.info
     genhtml -o coverage coverage.info
 
 [working-directory: '.']
