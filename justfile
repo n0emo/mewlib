@@ -10,6 +10,9 @@ configure-clang:
 build:
     cmake --build build
 
+test: build
+    ctest --output-on-failure --test-dir build
+
 valgrind name: build
     valgrind --error-exitcode=1 './build/{{ name }}'
 

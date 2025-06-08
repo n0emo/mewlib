@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#define MEW_VEC_INITIAL_CAP 128
+
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
     assert(vec != NULL);
     assert(element_size != 0);
@@ -15,6 +17,7 @@ void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
 
 void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
     assert(vec != NULL);
+    assert(new_capacity != 0);
 
     if (new_capacity <= vec->capacity)
         return;
@@ -52,7 +55,8 @@ void mew_vec_push(MewVector *vec, const void *element) {
     assert(element != NULL);
 
     if (vec->count == vec->capacity) {
-        mew_vec_reserve(vec, vec->capacity * 2);
+        size_t new_capacity = vec->capacity == 0 ? MEW_VEC_INITIAL_CAP : vec->capacity * 2;
+        mew_vec_reserve(vec, new_capacity);
     }
 
     char *ptr = vec->data;
