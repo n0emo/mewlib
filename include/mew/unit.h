@@ -34,7 +34,7 @@ typedef struct MewTest {
 #define mewassert(message, ...)                                                                                        \
     do {                                                                                                               \
         if (!(__VA_ARGS__)) {                                                                                          \
-            return MEW_TEST_WHERE ":\n      Assertion `" #__VA_ARGS__ "` failed: " message;                              \
+            return MEW_TEST_WHERE ":\n      Assertion `" #__VA_ARGS__ "` failed: " message;                            \
         }                                                                                                              \
     } while (0)
 
@@ -47,7 +47,7 @@ typedef struct MewTest {
                                                                                                                        \
         size_t passed = 0;                                                                                             \
         for (size_t i = 0; i < mew_tests_count; i++) {                                                                 \
-            printf("    Running '%s'... ", mew_tests[i].name);                                                           \
+            printf("    Running '%s'... ", mew_tests[i].name);                                                         \
             fflush(stdout);                                                                                            \
                                                                                                                        \
             char *result = mew_tests[i].func();                                                                        \
@@ -55,11 +55,11 @@ typedef struct MewTest {
                 printf("OK\n");                                                                                        \
                 passed++;                                                                                              \
             } else {                                                                                                   \
-                printf("FAIL\n\n    %s.\n", result);                                                                     \
+                printf("FAIL\n\n    %s.\n\n", result);                                                                 \
             }                                                                                                          \
         }                                                                                                              \
                                                                                                                        \
-        printf("\n    Passed: %zu/%zu tests.\n", passed, mew_tests_count);                                               \
+        printf("\n    Passed: %zu/%zu tests.\n", passed, mew_tests_count);                                             \
         return passed == mew_tests_count ? 0 : 1;                                                                      \
     }
 #endif // MEW_INCLUDE_UNIT_H_

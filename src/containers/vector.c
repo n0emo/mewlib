@@ -6,6 +6,10 @@
 
 #define MEW_VEC_INITIAL_CAP 128
 
+static inline size_t mew_vec_new_cap(MewVector *vec) {
+    return vec->capacity == 0 ? MEW_VEC_INITIAL_CAP : vec->capacity * 2;
+}
+
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
     assert(vec != NULL);
     assert(element_size != 0);
@@ -55,8 +59,7 @@ void mew_vec_push(MewVector *vec, const void *element) {
     assert(element != NULL);
 
     if (vec->count == vec->capacity) {
-        size_t new_capacity = vec->capacity == 0 ? MEW_VEC_INITIAL_CAP : vec->capacity * 2;
-        mew_vec_reserve(vec, new_capacity);
+        mew_vec_reserve(vec, mew_vec_new_cap(vec));
     }
 
     char *ptr = vec->data;
@@ -78,7 +81,7 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
     }
 
     if (vec->count == vec->capacity) {
-        mew_vec_reserve(vec, vec->capacity * 2);
+        mew_vec_reserve(vec, mew_vec_new_cap(vec));
     }
 
     for (ptrdiff_t i = (ptrdiff_t)vec->count; i > (ptrdiff_t)index; i--) {

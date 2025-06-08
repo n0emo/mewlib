@@ -21,18 +21,19 @@ TEST(vector_init, {
     mewassert("Vector should be empty", vector.capacity == 0);
     mewassert("Vector should be empty", vector.data == NULL);
     mewassert("Vector should have correct element size", vector.element_size == sizeof(uint64_t));
+
+    mew_vec_destroy(&vector);
 })
 
 TEST(vector_push, {
     MewVector vector;
     mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
 
-    uint64_t item1 = 1, item2 = 2, item3 = 3;
-    mew_vec_push(&vector, (void *)&item1);
-    mew_vec_push(&vector, (void *)&item2);
-    mew_vec_push(&vector, (void *)&item3);
+    for (size_t i = 1; i <= 1024; i++) {
+        mew_vec_push(&vector, (void *)&i);
+    }
 
-    mewassert("Vector should have 3 elements", vector.count == 3);
+    mewassert("Vector should have 3 elements", vector.count == 1024);
     mewassert("Vector should have some capacity", vector.capacity != 0);
     mewassert("Vector should have valid data pointer", vector.data != NULL);
 
@@ -49,8 +50,10 @@ TEST(vector_reserve, {
     mewassert("Vector should have valid data pointer", vector.data != NULL);
 
     mew_vec_reserve(&vector, 20);
-
     mewassert("Vector should have capacity equals to 20 after second reserve", vector.capacity == 20);
+
+    mew_vec_reserve(&vector, 15);
+    mewassert("Vector reserve does nothing when invoked with new_capacity less then actual", vector.capacity == 20);
 
     mew_vec_destroy(&vector);
 })
@@ -59,10 +62,9 @@ TEST(vector_get, {
     MewVector vector;
     mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
 
-    uint64_t item1 = 1, item2 = 2, item3 = 3;
-    mew_vec_push(&vector, (void *)&item1);
-    mew_vec_push(&vector, (void *)&item2);
-    mew_vec_push(&vector, (void *)&item3);
+    for (size_t i = 1; i <= 1024; i++) {
+        mew_vec_push(&vector, (void *)&i);
+    }
 
     for (size_t i = 0; i < vector.count; i++) {
         uint64_t *item = mew_vec_get(&vector, i);
@@ -70,7 +72,7 @@ TEST(vector_get, {
         mewassert("Item should be valid", *item == i + 1);
     }
 
-    uint64_t *invalid = mew_vec_get(&vector, 10);
+    uint64_t *invalid = mew_vec_get(&vector, 10000);
     mewassert("Item should be NULL if index is invalid", invalid == NULL);
 
     mew_vec_destroy(&vector);
@@ -93,6 +95,32 @@ TEST(vector_insert_at, {
         "Vector should be valid after insert_at operations",
         is_uint64_t_array_equals(&vector, (uint64_t[]) {111, 0, 1, 111, 2, 3, 4, 111})
     );
+
+    mew_vec_destroy(&vector);
+})
+
+TEST(vector_insert_at_the_end, {
+    MewVector vector;
+    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+
+    for (uint64_t i = 0; i < 1024; i++) {
+        mew_vec_insert_at(&vector, (void *)&i, i);
+    }
+
+    mewassert("Vector should have 1024 elements", vector.count == 1024);
+
+    mew_vec_destroy(&vector);
+})
+
+TEST(vector_insert_at_the_beginning, {
+    MewVector vector;
+    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+
+    for (uint64_t i = 0; i < 1024; i++) {
+        mew_vec_insert_at(&vector, (void *)&i, 0);
+    }
+
+    mewassert("Vector should have 1024 elements", vector.count == 1024);
 
     mew_vec_destroy(&vector);
 })
