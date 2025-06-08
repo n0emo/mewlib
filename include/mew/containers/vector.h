@@ -11,10 +11,10 @@
 
 typedef struct MewVector {
     Allocator alloc;
+    char *data;
     size_t capacity;
     size_t count;
     size_t element_size;
-    char *data;
 } MewVector;
 
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size);

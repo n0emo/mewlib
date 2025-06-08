@@ -16,13 +16,13 @@ void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size) {
 void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
     assert(vec != NULL);
 
-    if (new_capacity < vec->capacity)
+    if (new_capacity <= vec->capacity)
         return;
 
     if (vec->data == NULL) {
         vec->data = mem_alloc(vec->alloc, new_capacity * vec->element_size);
     } else {
-        vec->data = mem_realloc(vec->alloc, vec->data, vec->capacity, new_capacity);
+        vec->data = mem_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
     }
 
     vec->capacity = new_capacity;
@@ -77,7 +77,7 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
         mew_vec_reserve(vec, vec->capacity * 2);
     }
 
-    for (ptrdiff_t i = (ptrdiff_t)vec->count; i >= (ptrdiff_t)index; i--) {
+    for (ptrdiff_t i = (ptrdiff_t)vec->count; i > (ptrdiff_t)index; i--) {
         char *ptr = vec->data;
         ptr += (ptrdiff_t)vec->element_size * i;
         memcpy(ptr, ptr - vec->element_size, vec->element_size);
