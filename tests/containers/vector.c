@@ -1,6 +1,7 @@
+#include <stdint.h>
+
 #include <mew/containers/vector.h>
 #include <mew/unit.h>
-#include <stdint.h>
 
 bool is_uint64_t_array_equals(MewVector *vec, uint64_t *array) {
     for (size_t i = 0; i < vec->count; i++) {

@@ -37,8 +37,9 @@ void hashmap_init(
     size_t key_size,
     size_t value_size
 );
+void hashmap_destroy(HashMap *map);
 void hashmap_insert(HashMap *map, const void *key, const void *value);
-bool hashmap_pop(HashMap *map, const void *key, void **found_key, void **value);
+bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value);
 void *hashmap_get(HashMap *map, const void *key);
 bool hashmap_iterate(HashMap *map, hashmap_iter_t iter);
 
