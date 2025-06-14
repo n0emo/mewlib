@@ -1,6 +1,6 @@
 #include <mew/core/strings/cstr.h>
 
-bool str_contains(const char *s, char c) {
+bool cstr_contains(const char *s, char c) {
     while (*s != '\0') {
         if (*s == c)
             return true;

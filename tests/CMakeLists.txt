@@ -10,5 +10,6 @@ macro(create_test name src)
     )
 endmacro()
 
-create_test(vector ./containers/vector.c)
-create_test(hashmap ./containers/hashmap.c)
+create_test(containers-vector ./containers/vector.c)
+create_test(containers-hashmap ./containers/hashmap.c)
+create_test(core-strings-cstr ./core/strings/cstr.c)
