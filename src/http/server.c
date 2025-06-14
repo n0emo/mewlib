@@ -1,12 +1,10 @@
-#include "mew/http/server.h"
+#include <mew/http/server.h>
 
 #include <signal.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include "mew/alloc.h"
-#include "mew/log.h"
-#include "mew/utils.h"
+#include <mew/core.h>
+#include <mew/log.h>
 
 typedef struct {
     HttpServer *server;

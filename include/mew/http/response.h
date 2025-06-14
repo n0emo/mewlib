@@ -1,13 +1,11 @@
 #ifndef MEW_INCLUDE_MEW_HTTP_RESPONSE_H_
 #define MEW_INCLUDE_MEW_HTTP_RESPONSE_H_
 
-#include <stddef.h>
-
-#include "mew/alloc.h"
-#include "mew/http/common.h"
-#include "mew/http/headermap.h"
-#include "mew/os/socket.h"
-#include "mew/utils.h"
+#include <mew/core/alloc.h>
+#include <mew/core/os/socket.h>
+#include <mew/core/utils.h>
+#include <mew/http/common.h>
+#include <mew/http/headermap.h>
 
 typedef enum {
     RESPONSE_BODY_NONE = 0,

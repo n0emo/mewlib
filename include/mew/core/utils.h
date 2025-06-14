@@ -1,5 +1,5 @@
-#ifndef MEW_INCLUDE_MEW_UTILS_H_
-#define MEW_INCLUDE_MEW_UTILS_H_
+#ifndef INCLUDE_MEW_CORE_UTILS_H_
+#define INCLUDE_MEW_CORE_UTILS_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -45,4 +45,4 @@
 
 void wait_for_ctrl_c(void);
 
-#endif // MEW_INCLUDE_MEW_UTILS_H_
+#endif // INCLUDE_MEW_CORE_UTILS_H_

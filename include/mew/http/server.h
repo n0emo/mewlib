@@ -2,14 +2,14 @@
 #define MEW_INCLUDE_MEW_HTTP_SERVER_H_
 
 #include <netinet/in.h>
-#include <stdint.h>
 
-#include "mew/http/router.h"
-#include "mew/os/socket.h"
-#include "mew/thrdpool.h"
+#include <mew/core/types.h>
+#include <mew/core/os/socket.h>
+#include <mew/http/router.h>
+#include <mew/thrdpool.h>
 
 typedef struct HttpServerSettings {
-    uint16_t port;
+    u16 port;
     const char *host;
 } HttpServerSettings;
 

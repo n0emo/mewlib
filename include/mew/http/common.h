@@ -3,7 +3,8 @@
 
 #include <stdbool.h>
 
-#include "mew/str.h"
+#include <mew/core/strings/sb.h>
+#include <mew/core/strings/sv.h>
 
 typedef enum {
     HTTP_OK = 200,

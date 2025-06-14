@@ -1,20 +1,15 @@
 #ifndef MEW_INCLUDE_MEW_CONTAINERS_VECTOR_H_
 #define MEW_INCLUDE_MEW_CONTAINERS_VECTOR_H_
 
-// TODO: testing
-// TODO: define_for_type
-
-#include <stdbool.h>
-#include <stddef.h>
-
-#include "mew/alloc.h"
+#include <mew/core/types.h>
+#include <mew/core/alloc.h>
 
 typedef struct MewVector {
     Allocator alloc;
     char *data;
-    size_t capacity;
-    size_t count;
-    size_t element_size;
+    usize capacity;
+    usize count;
+    usize element_size;
 } MewVector;
 
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size);

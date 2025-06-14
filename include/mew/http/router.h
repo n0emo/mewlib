@@ -7,9 +7,9 @@
 
 #include <stddef.h>
 
-#include "mew/alloc.h"
-#include "mew/http/handler.h"
-#include "mew/str.h"
+#include <mew/core/alloc.h>
+#include <mew/core/strings/sv.h>
+#include <mew/http/handler.h>
 
 typedef struct HttpRoute {
     const char *pattern_ptr;

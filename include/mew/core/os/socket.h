@@ -1,10 +1,8 @@
-#ifndef MEW_INCLUDE_MEW_OS_SOCKET_H_
-#define MEW_INCLUDE_MEW_OS_SOCKET_H_
+#ifndef INCLUDE_MEW_CORE_OS_SOCKET_H_
+#define INCLUDE_MEW_CORE_OS_SOCKET_H_
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include <mew/core/types.h>
+#include <mew/core/strings/cstr.h>
 
 typedef struct MewTcpListener MewTcpListener;
 typedef struct MewTcpStream MewTcpStream;
@@ -88,9 +86,9 @@ static inline bool mew_tcpstream_close(MewTcpStream stream) {
 }
 
 static inline bool mew_tcpstream_write_cstr(MewTcpStream stream, const char *cstr) {
-    return stream.write(stream.data, cstr, strlen(cstr));
+    return stream.write(stream.data, cstr, cstr_len(cstr));
 }
 
 // TODO: SSL Socket
 
-#endif // MEW_INCLUDE_MEW_OS_SOCKET_H_
+#endif // INCLUDE_MEW_CORE_OS_SOCKET_H_

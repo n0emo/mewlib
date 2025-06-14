@@ -1,56 +1,8 @@
-#include "mew/str.h"
+#include <mew/core/strings/sv.h>
 
 #include <string.h>
 
-#include "mew/utils.h"
-
-bool str_contains(const char *s, char c) {
-    while (*s != '\0') {
-        if (*s == c)
-            return true;
-        s++;
-    }
-    return false;
-}
-
-void sb_append_char(StringBuilder *sb, char c) {
-    ARRAY_APPEND(sb, c, sb->alloc);
-}
-
-void sb_append_buf(StringBuilder *sb, const char *buf, size_t size) {
-    for (size_t i = 0; i < size; i++) {
-        sb_append_char(sb, buf[i]);
-    }
-}
-
-void sb_append_cstr(StringBuilder *sb, const char *s) {
-    while (*s != '\0') {
-        sb_append_char(sb, *s);
-        s++;
-    }
-}
-
-void sb_append_sv(StringBuilder *sb, StringView sv) {
-    sb_append_buf(sb, sv.items, sv.count);
-}
-
-void sb_append_sb(StringBuilder *sb, StringBuilder other) {
-    sb_append_buf(sb, other.items, other.count);
-}
-
-StringView cstr_to_sv(const char *cstr) {
-    return (StringView) {
-        .items = cstr,
-        .count = strlen(cstr),
-    };
-}
-
-StringView sb_to_sv(StringBuilder sb) {
-    return (StringView) {
-        .items = sb.items,
-        .count = sb.count,
-    };
-}
+#include <mew/core.h>
 
 StringView sv_identity(StringView sv) {
     return sv;
@@ -188,13 +140,6 @@ StringView sv_chop_by(StringView *sv, char c) {
     return result;
 }
 
-StringView sv_dup(Allocator alloc, StringView sv) {
-    return (StringView) {
-        .items = mem_memdup(alloc, sv.items, sv.count),
-        .count = sv.count,
-    };
-}
-
 size_t sv_count_char(StringView sv, char c) {
     size_t count = 0;
     for (size_t i = 0; i < sv.count; i++) {
@@ -218,4 +163,11 @@ ptrdiff_t sv_last_index_char(StringView sv, char c) {
             return i;
     }
     return -1;
+}
+
+StringView sv_dup(Allocator alloc, StringView sv) {
+    return (StringView) {
+        .items = mem_memdup(alloc, sv.items, sv.count),
+        .count = sv.count,
+    };
 }

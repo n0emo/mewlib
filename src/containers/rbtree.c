@@ -1,7 +1,9 @@
-#include "mew/containers/rbtree.h"
+#include <mew/containers/rbtree.h>
 
 #include <assert.h>
 #include <string.h>
+
+#include <mew/core.h>
 
 static RBTreeNode *rbtree_new_node(RBTree *tree, const void *element) {
     size_t size = sizeof(RBTreeNode) + tree->element_size;

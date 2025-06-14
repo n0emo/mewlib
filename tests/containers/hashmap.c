@@ -1,9 +1,5 @@
 #include <mew/containers/hashmap.h>
 
-#include <stdint.h>
-
-#include <mew/alloc.h>
-#include <mew/str.h>
 #include <mew/unit.h>
 
 #define DEADBEEF ((void *)0xdeadbeef)

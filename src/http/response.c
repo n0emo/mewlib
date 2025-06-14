@@ -1,10 +1,10 @@
-#include "mew/http/response.h"
+#include <mew/http/response.h>
 
 #include <assert.h>
 #include <stdio.h>
 
-#include "mew/http/common.h"
-#include "mew/log.h"
+#include <mew/http/common.h>
+#include <mew/log.h>
 
 bool http_response_write(HttpResponse *response, MewTcpStream stream) {
     if (!mew_tcpstream_write_cstr(stream, "HTTP/1.1 "))

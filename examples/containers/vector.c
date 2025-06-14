@@ -1,5 +1,8 @@
 #include <mew/containers/vector.h>
+
 #include <stdio.h>
+
+#include <mew/core.h>
 
 mew_vec_define_for_type(int);
 

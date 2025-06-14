@@ -2,6 +2,7 @@
 
 #define MEW_HTML_SHORT_TAGS
 #include <mew/html.h>
+#include <mew/core.h>
 
 int main(void) {
     Html h = html_begin();

@@ -1,8 +1,8 @@
-#include "mew/http/fs.h"
+#include <mew/http/fs.h>
 
 #include <string.h>
 
-#include "mew/os/fs.h"
+#include <mew/core.h>
 
 bool try_serve_dir(HttpResponse *response, StringView file, StringView dir) {
     if (file.items[0] == '/')

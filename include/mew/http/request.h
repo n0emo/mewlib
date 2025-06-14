@@ -1,12 +1,12 @@
 #ifndef MEW_INCLUDE_MEW_HTTP_REQUEST_H_
 #define MEW_INCLUDE_MEW_HTTP_REQUEST_H_
 
-#include "mew/alloc.h"
-#include "mew/containers/hashmap.h"
-#include "mew/http/common.h"
-#include "mew/http/headermap.h"
-#include "mew/os/socket.h"
-#include "mew/utils.h"
+#include <mew/containers/hashmap.h>
+#include <mew/core/alloc.h>
+#include <mew/core/os/socket.h>
+#include <mew/core/utils.h>
+#include <mew/http/common.h>
+#include <mew/http/headermap.h>
 
 typedef struct HttpPathParams {
     HashMap map;

@@ -1,9 +1,9 @@
 #ifndef MEW_INCLUDE_MEW_INI_H_
 #define MEW_INCLUDE_MEW_INI_H_
 
-#include "mew/alloc.h"
-#include "mew/str.h"
-#include "mew/utils.h"
+#include <mew/core/alloc.h>
+#include <mew/core/strings/sv.h>
+#include <mew/core/utils.h>
 
 typedef struct {
     StringView key;

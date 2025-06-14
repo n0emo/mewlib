@@ -1,17 +1,15 @@
 #ifndef MEW_INCLUDE_MEW_CONTAINERS_HASHMAP_H_
 #define MEW_INCLUDE_MEW_CONTAINERS_HASHMAP_H_
 
-#include <stdbool.h>
-#include <stddef.h>
-
-#include "mew/alloc.h"
+#include <mew/core/types.h>
+#include <mew/core/alloc.h>
 
 typedef uint64_t hashfunc_t(const void *value, void *user_data);
 typedef bool hashmap_equals_t(const void *a, const void *b, void *user_data);
 typedef bool hashmap_iter_t(const void *key, const void *value, void *user_data);
 
 typedef struct HashMapBucket {
-    size_t map_index;
+    usize map_index;
     bool initialized;
     char _padding[7];
     char data[];

@@ -1,8 +1,9 @@
 #ifndef MEW_INCLUDE_UNIT_H_
 #define MEW_INCLUDE_UNIT_H_
 
-#include <stddef.h>
 #include <stdio.h>
+
+#include <mew/core.h>
 
 #define MEW_STRINGIZE_DETAIL(x) #x
 #define MEW_STRINGIZE(x) MEW_STRINGIZE_DETAIL(x)

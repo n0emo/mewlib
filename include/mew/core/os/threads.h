@@ -3,10 +3,10 @@
  * @brief OS-independent threads implementation
  */
 
-#ifndef INCLUDE_MEW_OS_THREADS_H_
-#define INCLUDE_MEW_OS_THREADS_H_
+#ifndef INCLUDE_MEW_CORE_OS_THREADS_H_
+#define INCLUDE_MEW_CORE_OS_THREADS_H_
 
-#include <cstdint>
+#include <mew/core/types.h>
 
 /**
  * @struct MewThread
@@ -150,4 +150,4 @@ bool mew_cond_notify(MewCond *cond);
  */
 bool mew_cond_notify_all(MewCond *cond);
 
-#endif // INCLUDE_MEW_OS_THREADS_H_
+#endif // INCLUDE_MEW_CORE_OS_THREADS_H_

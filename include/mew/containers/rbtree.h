@@ -1,10 +1,8 @@
 #ifndef MEW_INCLUDE_MEW_CONTAINERS_RBTREE_H_
 #define MEW_INCLUDE_MEW_CONTAINERS_RBTREE_H_
 
-#include <stdbool.h>
-#include <stddef.h>
-
-#include "mew/alloc.h"
+#include <mew/core/types.h>
+#include <mew/core/alloc.h>
 
 typedef struct RBTree RBTree;
 typedef struct RBTreeNode RBTreeNode;

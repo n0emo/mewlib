@@ -1,17 +1,16 @@
-#include "mew/utils.h"
+#include <mew/core/utils.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 // TODO: port to Windows
 #include <unistd.h>
 
-#include "mew/log.h"
+#include <mew/log.h>
 
 volatile sig_atomic_t interrupted = 0;
 

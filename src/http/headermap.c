@@ -1,6 +1,6 @@
-#include "mew/http/headermap.h"
+#include <mew/http/headermap.h>
 
-#include "mew/utils.h"
+#include <mew/core.h>
 
 hashfunc_t header_hash;
 hashmap_equals_t header_equals;

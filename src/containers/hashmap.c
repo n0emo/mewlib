@@ -1,8 +1,8 @@
-#include "mew/containers/hashmap.h"
+#include <mew/containers/hashmap.h>
 
 #include <string.h>
 
-#include "mew/str.h"
+#include <mew/core.h>
 
 #define HASHMAP_INITIAL_BUCKETS 16
 

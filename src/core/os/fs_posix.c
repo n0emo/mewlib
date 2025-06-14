@@ -1,10 +1,11 @@
+#include <mew/core/os/fs.h>
+
 #include <fcntl.h>
 #include <stddef.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "mew/os/fs.h"
-#include "mew/utils.h"
+#include "mew/core/utils.h"
 
 bool mew_fs_exists(const char *path) {
     struct stat s;

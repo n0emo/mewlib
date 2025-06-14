@@ -1,10 +1,9 @@
-#include "mew/http/router.h"
+#include <mew/http/router.h>
 
 #include <assert.h>
 #include <stdlib.h>
 
-#include "mew/str.h"
-#include "mew/utils.h"
+#include <mew/core.h>
 
 int compare_routes(const void *a, const void *b);
 
@@ -64,7 +63,7 @@ void http_route_handler_cstr(HttpRouter *router, const char *path, HttpRequestHa
 
 void http_route_handler_sv(HttpRouter *router, StringView path, HttpRequestHandler handler) {
     assert(path.items[0] == '/' && "Paths must start with '/'");
-    StringView pattern_sv = sv_dup(router->alloc, sv_slice_from(path, 1));
+    StringView pattern_sv =  sv_dup(router->alloc, sv_slice_from(path, 1));
     const char *pattern_ptr = pattern_sv.items;
 
     size_t len = sv_count_char(pattern_sv, '/') + 1;

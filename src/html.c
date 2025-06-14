@@ -1,8 +1,8 @@
-#include "mew/html.h"
+#include <mew/html.h>
 
 #include <assert.h>
 
-#include "mew/alloc.h"
+#include <mew/core.h>
 
 Html html_begin(void) {
     Html html = {0};

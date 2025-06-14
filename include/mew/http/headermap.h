@@ -1,8 +1,8 @@
 #ifndef MEW_INCLUDE_MEW_HTTP_HEADERMAP_H_
 #define MEW_INCLUDE_MEW_HTTP_HEADERMAP_H_
 
-#include "mew/containers/hashmap.h"
-#include "mew/str.h"
+#include <mew/containers/hashmap.h>
+#include <mew/core/strings/sv.h>
 
 typedef struct HttpHeader {
     StringView key;

@@ -1,3 +1,5 @@
+#include <mew/core/os/socket.h>
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -6,14 +8,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "mew/os/socket.h"
 
 #ifndef __APPLE__
     #include <sys/sendfile.h>
 #endif
 
-#include "mew/log.h"
-#include "mew/utils.h"
+#include <mew/core.h>
+#include <mew/log.h>
 
 mew_tcplistener_bind_t mew_tcplistener_native_bind;
 mew_tcplistener_listen_t mew_tcplistener_native_listen;

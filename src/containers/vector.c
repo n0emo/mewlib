@@ -1,8 +1,9 @@
-#include "mew/containers/vector.h"
+#include <mew/containers/vector.h>
 
 #include <assert.h>
-#include <stddef.h>
 #include <string.h>
+
+#include <mew/core.h>
 
 #define MEW_VEC_INITIAL_CAP 128
 
