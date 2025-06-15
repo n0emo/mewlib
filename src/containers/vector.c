@@ -28,9 +28,10 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
         return;
 
     if (vec->data == NULL) {
-        vec->data = mem_alloc(vec->alloc, new_capacity * vec->element_size);
+        vec->data = mem_calloc(vec->alloc, new_capacity, vec->element_size);
     } else {
         vec->data =
+            // TODO: mem_recalloc
             mem_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
     }
 
@@ -138,4 +139,5 @@ void mew_vec_copy_to(MewVector *dst, const MewVector *src) {
 
     mew_vec_reserve(dst, dst->count + src->count);
     memcpy(mew_vec_end(dst), mew_vec_begin(src), mew_vec_size_bytes(src));
+    dst->count += src->count;
 }

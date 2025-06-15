@@ -162,6 +162,36 @@ TEST(vector_delete_at, {
     mew_vec_destroy(&vector);
 })
 
+TEST(vector_copy_to, {
+    MewVector src;
+    mew_vec_init(&src, new_malloc_allocator(), sizeof(u64));
+    for (u64 i = 0; i < 10; i++) {
+        mew_vec_push(&src, &i);
+    }
+
+    MewVector dst;
+    mew_vec_init(&dst, new_malloc_allocator(), sizeof(u64));
+
+    mew_vec_copy_to(&dst, &src);
+    mewassert("After copy empty vec should now have the same count as source", dst.count == src.count);
+    mewassert("After copy empty vec should now have the same capacity as source", dst.capacity == src.count);
+    mewassert(
+        "After copy all elements should be copied correctly",
+        is_uint64_t_array_equals(&dst, (u64[]) {0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
+    );
+
+    mew_vec_copy_to(&dst, &src);
+    mewassert("After copy dst vec should now have the same count as twice the source", dst.count == src.count * 2);
+    mewassert(
+        "After copy dst vec should now have the same capacity as twice the source",
+        dst.capacity == src.count * 2
+    );
+    mewassert(
+        "After copy all elements should be copied correctly",
+        is_uint64_t_array_equals(&dst, (u64[]) {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
+    );
+})
+
 // TEST: mew_vec_define_for_type
 
 mewtest_main()

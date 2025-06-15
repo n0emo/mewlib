@@ -38,8 +38,7 @@ bool http_request_init(HttpRequest *request, Allocator alloc) {
 }
 
 bool http_request_parse(HttpRequest *request, MewTcpStream stream) {
-    StringBuilder header;
-    sb_init(&header, request->ctx.alloc);
+    StringBuilder header = sb_new(request->ctx.alloc);
 
     if (!read_request_header_lines(stream, &header, &request->body)) {
         return false;
@@ -78,8 +77,7 @@ bool http_request_parse(HttpRequest *request, MewTcpStream stream) {
     }
 
     StringView resource_path = request->resource_path;
-    StringBuilder sb;
-    sb_init(&sb, request->ctx.alloc);
+    StringBuilder sb = sb_new(request->ctx.alloc);
     StringView path = sv_chop_by(&resource_path, '?');
     if (!http_urldecode(path, &sb)) {
         return false;
@@ -105,7 +103,7 @@ bool read_request_header_lines(MewTcpStream stream, StringBuilder *header, Strin
 
         sb_append_buf(header, buf, (size_t)bytes);
         sb_append_char(header, '\0');
-        sb_set_count(header, sb_count(header) - 1);
+        sb_count(header)++;
 
         const char *body_ptr = strstr(sb_begin(header) + count, "\r\n\r\n");
         count = sb_count(header);
@@ -119,7 +117,7 @@ bool read_request_header_lines(MewTcpStream stream, StringBuilder *header, Strin
         if (body_ptr != NULL) {
             size_t header_size = (size_t)(body_ptr - sb_begin(header));
             sb_append_buf(body, body_ptr + newlines, sb_count(header) - header_size - newlines);
-            sb_set_count(header, header_size);
+            sb_count(header) = header_size;
             return true;
         }
     }

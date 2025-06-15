@@ -1,30 +1,29 @@
 #include <mew/core/strings/sb.h>
 
-#include <mew/core/utils.h>
 #include <mew/core/allocators/malloc.h>
 
 void sb_init(StringBuilder *sb, Allocator alloc) {
     mew_vec_init(&sb->vec, alloc, sizeof(char));
 }
 
-void sb_default(StringBuilder *sb) {
+void sb_init_default(StringBuilder *sb) {
     sb_init(sb, new_malloc_allocator());
+}
+
+StringBuilder sb_new(Allocator alloc) {
+    StringBuilder sb;
+    sb_init(&sb, alloc);
+    return sb;
+}
+
+StringBuilder sb_new_default(void) {
+    StringBuilder sb;
+    sb_init_default(&sb);
+    return sb;
 }
 
 void sb_destroy(StringBuilder *sb) {
     mew_vec_destroy(&sb->vec);
-}
-
-usize sb_count(const StringBuilder *sb) {
-    return sb->vec.count;
-}
-
-void sb_set_count(StringBuilder *sb, usize count) {
-    sb->vec.count = count;
-}
-
-char *sb_begin(const StringBuilder *sb) {
-    return sb->vec.data;
 }
 
 void sb_append_char(StringBuilder *sb, char c) {
@@ -42,14 +41,6 @@ void sb_append_cstr(StringBuilder *sb, const char *s) {
         sb_append_char(sb, *s);
         s++;
     }
-}
-
-void sb_append_sv(StringBuilder *sb, StringView sv) {
-    sb_append_buf(sb, sv.items, sv.count);
-}
-
-void sb_append_sb(StringBuilder *sb, StringBuilder other) {
-    sb_append_buf(sb, other.vec.data, other.vec.count);
 }
 
 StringBuilder sb_dup(Allocator alloc, StringBuilder sb) {

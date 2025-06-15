@@ -21,8 +21,7 @@ int main(void) {
     html_end(&h);
 
     // Render HTML to string builder and print
-    StringBuilder sb = {0};
-    sb_default(&sb);
+    StringBuilder sb = sb_new_default();
     html_render_to_sb_and_free(&h, &sb);
     printf(SB_FMT, SB_ARG(sb));
 

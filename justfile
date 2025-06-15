@@ -26,7 +26,7 @@ coverage: clean configure-gcc-debug test
     ctest -T Coverage
     find . -name '*.gcda' | xargs gcov
     lcov --directory . --capture --output-file coverage.info
-    genhtml --dark-mode --hierarchical -o coverage coverage.info
+    genhtml --dark-mode --flat -o coverage coverage.info
 
 [working-directory: '.']
 coverage-open: coverage
