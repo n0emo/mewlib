@@ -11,7 +11,7 @@ StringView cstr_to_sv(const char *cstr) {
 
 StringView sb_to_sv(StringBuilder sb) {
     return (StringView) {
-        .items = sb.items,
-        .count = sb.count,
+        .items = sb_begin(&sb),
+        .count = sb_count(&sb),
     };
 }

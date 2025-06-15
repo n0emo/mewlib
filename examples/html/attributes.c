@@ -30,9 +30,9 @@ int main(void) {
     html_end(&h);
 
     StringBuilder sb = {0};
-    sb.alloc = new_malloc_allocator();
+    sb_default(&sb);
     html_render_to_sb_and_free(&h, &sb);
-    printf(SV_FMT, SV_ARG(sb));
+    printf(SB_FMT, SB_ARG(sb));
 
     return 0;
 }

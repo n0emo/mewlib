@@ -13,25 +13,22 @@ typedef struct MewVector {
 } MewVector;
 
 void mew_vec_init(MewVector *vec, Allocator alloc, size_t element_size);
-
 void mew_vec_destroy(MewVector *vec);
-
 void mew_vec_reserve(MewVector *vec, size_t new_capacity);
-
+char *mew_vec_begin(const MewVector *vec);
+char *mew_vec_end(const MewVector *vec);
+usize mew_vec_size_bytes(const MewVector *vec);
 void *mew_vec_get(MewVector *vec, size_t index);
-
 void mew_vec_push(MewVector *vec, const void *element);
-
 void mew_vec_insert_at(MewVector *vec, const void *element, size_t index);
-
 void mew_vec_delete_at(MewVector *vec, size_t index);
+void mew_vec_copy_to(MewVector *dst, const MewVector *src);
 
 // TODO: more vector functions:
 //         - push_range
 //         - clear
 //         - contains
 //         - transform
-//         - copy_to
 //         - index_of
 //         - find
 //         - remove

@@ -30,10 +30,29 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
     if (vec->data == NULL) {
         vec->data = mem_alloc(vec->alloc, new_capacity * vec->element_size);
     } else {
-        vec->data = mem_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
+        vec->data =
+            mem_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
     }
 
     vec->capacity = new_capacity;
+}
+
+char *mew_vec_begin(const MewVector *vec) {
+    assert(vec != NULL);
+
+    return vec->data;
+}
+
+char *mew_vec_end(const MewVector *vec) {
+    assert(vec != NULL);
+
+    return vec->data + mew_vec_size_bytes(vec);
+}
+
+usize mew_vec_size_bytes(const MewVector *vec) {
+    assert(vec != NULL);
+
+    return vec->count * vec->element_size;
 }
 
 void mew_vec_destroy(MewVector *vec) {
@@ -110,4 +129,13 @@ void mew_vec_delete_at(MewVector *vec, size_t index) {
         ptr += vec->element_size * i;
         memcpy(ptr, ptr + vec->element_size, vec->element_size);
     }
+}
+
+void mew_vec_copy_to(MewVector *dst, const MewVector *src) {
+    assert(src != NULL);
+    assert(dst != NULL);
+    assert(src->element_size == dst->element_size);
+
+    mew_vec_reserve(dst, dst->count + src->count);
+    memcpy(mew_vec_end(dst), mew_vec_begin(src), mew_vec_size_bytes(src));
 }

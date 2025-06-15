@@ -16,7 +16,7 @@ int main(void) {
         h_h1(h, ht_text(h, "Autoschool"));
 
         // Conditions
-        if (age < 18) {
+        if (age < 16) {
             h_p(h, ht_text(h, "You are not allowed to drive a car"));
         } else {
             h_p(h, ht_text(h, "Welcome to our autoschool!"));
@@ -33,9 +33,9 @@ int main(void) {
     });
 
     StringBuilder sb = {0};
-    sb.alloc = new_malloc_allocator();
+    sb_default(&sb);
     html_render_to_sb_and_free(&h, &sb);
-    printf(SV_FMT, SV_ARG(sb));
+    printf(SB_FMT, SB_ARG(sb));
 
     return 0;
 }

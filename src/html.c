@@ -8,7 +8,7 @@ Html html_begin(void) {
     Html html = {0};
     html.arena = (Arena) {0};
     html.alloc = new_arena_allocator(&html.arena);
-    html.sb.alloc = html.alloc;
+    sb_init(&html.sb, html.alloc);
     sb_append_cstr(&html.sb, "<!DOCTYPE html>\n");
     html_tag_begin(&html, "html");
     return html;

@@ -37,7 +37,7 @@ bool http_response_write(HttpResponse *response, MewTcpStream stream) {
         case RESPONSE_BODY_NONE:
             break;
         case RESPONSE_BODY_BYTES:
-            content_length = response->body.as.bytes.count;
+            content_length = sb_count(&response->body.as.bytes);
             break;
         case RESPONSE_BODY_SENDFILE:
             content_length = response->body.as.sendfile.size;
@@ -59,8 +59,8 @@ bool http_response_write(HttpResponse *response, MewTcpStream stream) {
             break;
         case RESPONSE_BODY_BYTES: {
             StringBuilder *sb = &response->body.as.bytes;
-            log_debug("Writing %zu bytes to response", sb->count);
-            if (mew_tcpstream_write(stream, sb->items, sb->count) < 0)
+            log_debug("Writing %zu bytes to response", sb_count(sb));
+            if (mew_tcpstream_write(stream, sb_begin(sb), sb_count(sb)) < 0)
                 return false;
         } break;
         case RESPONSE_BODY_SENDFILE: {
@@ -77,7 +77,7 @@ void http_response_body_set_bytes(HttpResponse *response) {
     assert(response->body.kind == RESPONSE_BODY_NONE);
     response->body.kind = RESPONSE_BODY_BYTES;
     response->body.as.bytes = (StringBuilder) {0};
-    response->body.as.bytes.alloc = response->body.alloc;
+    sb_init(&response->body.as.bytes, response->body.alloc);
 }
 
 void http_response_body_set_sendfile(HttpResponse *response, ResponseSendFile sendfile) {
@@ -88,7 +88,7 @@ void http_response_body_set_sendfile(HttpResponse *response, ResponseSendFile se
 
 void http_response_set_html(HttpResponse *response) {
     assert(response->body.kind == RESPONSE_BODY_BYTES);
-    assert(response->body.as.bytes.count > 0);
+    assert(sb_count(&response->body.as.bytes) > 0);
     response->status = HTTP_OK;
     http_headermap_insert_cstrs(&response->headers, "Content-Type", "text/html; charset=UTF-8");
 }

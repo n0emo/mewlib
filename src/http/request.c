@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <mew/core.h>
 #include <mew/http/headermap.h>
 #include <mew/log.h>
 
@@ -30,21 +31,20 @@ StringView *http_path_get(HttpPathParams *params, StringView key) {
 bool http_request_init(HttpRequest *request, Allocator alloc) {
     memset(request, 0, sizeof(*request));
     request->ctx.alloc = alloc;
-    request->body.alloc = alloc;
+    sb_init(&request->body, alloc);
     http_headermap_init(&request->headers, alloc);
     http_path_init(&request->ctx.path_params, alloc);
     return true;
 }
 
 bool http_request_parse(HttpRequest *request, MewTcpStream stream) {
-    StringBuilder header = {.alloc = request->ctx.alloc, 0};
+    StringBuilder header;
+    sb_init(&header, request->ctx.alloc);
 
-    if (!read_request_header_lines(stream, &header, &request->body))
+    if (!read_request_header_lines(stream, &header, &request->body)) {
         return false;
-    StringView sv = {
-        .items = header.items,
-        .count = header.count,
-    };
+    }
+    StringView sv = sb_to_sv(header);
 
     StringView status_line = sv_chop_by(&sv, '\n');
     request_trim_cr(&status_line);
@@ -78,10 +78,12 @@ bool http_request_parse(HttpRequest *request, MewTcpStream stream) {
     }
 
     StringView resource_path = request->resource_path;
-    StringBuilder sb = {.alloc = request->ctx.alloc, 0};
+    StringBuilder sb;
+    sb_init(&sb, request->ctx.alloc);
     StringView path = sv_chop_by(&resource_path, '?');
-    if (!http_urldecode(path, &sb))
+    if (!http_urldecode(path, &sb)) {
         return false;
+    }
     request->ctx.path = sb_to_sv(sb);
 
     request->ctx.query_string = resource_path;
@@ -103,21 +105,21 @@ bool read_request_header_lines(MewTcpStream stream, StringBuilder *header, Strin
 
         sb_append_buf(header, buf, (size_t)bytes);
         sb_append_char(header, '\0');
-        header->count--;
+        sb_set_count(header, sb_count(header) - 1);
 
-        const char *body_ptr = strstr(header->items + count, "\r\n\r\n");
-        count = header->count;
+        const char *body_ptr = strstr(sb_begin(header) + count, "\r\n\r\n");
+        count = sb_count(header);
         size_t newlines = 4;
 
         if (body_ptr == NULL) {
-            body_ptr = strstr(header->items, "\n\n");
+            body_ptr = strstr(sb_begin(header), "\n\n");
             newlines = 2;
         }
 
         if (body_ptr != NULL) {
-            size_t header_size = (size_t)(body_ptr - header->items);
-            sb_append_buf(body, body_ptr + newlines, header->count - header_size - newlines);
-            header->count = header_size;
+            size_t header_size = (size_t)(body_ptr - sb_begin(header));
+            sb_append_buf(body, body_ptr + newlines, sb_count(header) - header_size - newlines);
+            sb_set_count(header, header_size);
             return true;
         }
     }
