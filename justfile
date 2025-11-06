@@ -1,3 +1,5 @@
+CFLAGS := "-Wall -Wextra -pedantic"
+
 clean:
     rm -rf build
 
@@ -12,6 +14,11 @@ configure-gcc:
 [working-directory: '.']
 configure-gcc-debug:
     cmake -S . -B build -G 'Ninja' -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug
+
+check:
+    mkdir -p build
+    clang --std=c11 {{ CFLAGS }} -xc -DMEWLIB_IMPLEMENTATION -c -o build/mewlib.o mewlib.h
+    clang++ --std=c++11 {{ CFLAGS }} -xc++ -DMEWLIB_IMPLEMENTATION -c -o build/mewlib.o mewlib.h
 
 [working-directory: 'build']
 build:
