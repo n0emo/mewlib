@@ -137,6 +137,45 @@ void mew_vec_insert_at(MewVector *vec, const void *element, size_t index);
 void mew_vec_delete_at(MewVector *vec, size_t index);
 void mew_vec_copy_to(MewVector *dst, const MewVector *src);
 
+typedef uint64_t hashfunc_t(const void *value, void *user_data);
+typedef bool hashmap_equals_t(const void *a, const void *b, void *user_data);
+typedef bool hashmap_iter_t(const void *key, const void *value, void *user_data);
+
+typedef struct HashMapBucket {
+    usize map_index;
+    bool initialized;
+    char _padding[7];
+} HashMapBucket;
+
+typedef struct HashMap {
+    MewAllocator alloc;
+    hashfunc_t *hashfunc;
+    hashmap_equals_t *equals;
+    void *user_data;
+    size_t key_size;
+    size_t value_size;
+    size_t bucket_count;
+    size_t element_count;
+    HashMapBucket *buckets;
+} HashMap;
+
+void hashmap_init(
+    HashMap *map,
+    void *user_data,
+    hashfunc_t *hashfunc,
+    hashmap_equals_t *equals,
+    size_t key_size,
+    size_t value_size
+);
+void hashmap_destroy(HashMap *map);
+void hashmap_insert(HashMap *map, const void *key, const void *value);
+bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value);
+void *hashmap_get(HashMap *map, const void *key);
+bool hashmap_iterate(HashMap *map, hashmap_iter_t iter);
+
+hashfunc_t hashmap_sv_hash;
+hashmap_equals_t hashmap_sv_equals;
+
 bool mew_cstr_contains(const char *s, char c);
 usize mew_cstr_len(const char *s);
 
@@ -193,13 +232,7 @@ MewStringBuilder mew_sb_dup(MewAllocator alloc, MewStringBuilder sb);
 MewStringView mew_cstr_to_sv(const char *cstr);
 MewStringView mew_sb_to_sv(MewStringBuilder sb);
 
-typedef enum {
-    LOG_TRACE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARN,
-    LOG_ERROR
-} LogLevel;
+typedef enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR } LogLevel;
 
 void log_init(void);
 
@@ -214,10 +247,10 @@ void log_with_file(LogLevel level, const char *file, int line, const char *forma
 #endif
 
 #ifdef LOG_WITH_FILE
-    #define LOG_FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-    #define log(level, ...) log_with_file(level, LOG_FILENAME, __LINE__, __VA_ARGS__)
+#define LOG_FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define log(level, ...) log_with_file(level, LOG_FILENAME, __LINE__, __VA_ARGS__)
 #else
-    #define log(level, ...) log_simple(level, __VA_ARGS__)
+#define log(level, ...) log_simple(level, __VA_ARGS__)
 #endif
 
 #define log_trace(...) log(LOG_TRACE, __VA_ARGS__)
@@ -525,9 +558,8 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
     } else {
         vec->data =
             // TODO: mem_recalloc
-            (
-                char *
-            )mew_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
+            (char *)
+                mew_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
     }
 
     vec->capacity = new_capacity;
@@ -584,8 +616,6 @@ void mew_vec_push(MewVector *vec, const void *element) {
     vec->count++;
 }
 
-#include <stdio.h>
-
 void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
     assert(vec != NULL);
     assert(element != NULL);
@@ -635,6 +665,191 @@ void mew_vec_copy_to(MewVector *dst, const MewVector *src) {
     mew_vec_reserve(dst, dst->count + src->count);
     memcpy(mew_vec_end(dst), mew_vec_begin(src), mew_vec_size_bytes(src));
     dst->count += src->count;
+}
+
+#define HASHMAP_INITIAL_BUCKETS 16
+
+size_t round_to(size_t value, size_t roundTo);
+HashMapBucket *get_bucket_for_index(HashMap *map, size_t index);
+HashMapBucket *get_bucket_for_key(HashMap *map, const void *key);
+void alloc_buckets(HashMap *map, size_t count);
+void hashmap_expand(HashMap *map);
+size_t bucket_size(HashMap *map);
+bool map_equals(HashMap *map, const void *a, const void *b);
+void *bucket_data(HashMap *map, HashMapBucket *bucket);
+void *bucket_key(HashMapBucket *bucket);
+
+void hashmap_init(
+    HashMap *map,
+    void *user_data,
+    hashfunc_t *hashfunc,
+    hashmap_equals_t *equals,
+    size_t key_size,
+    size_t value_size
+) {
+    map->alloc = mew_malloc_allocator_create();
+    map->user_data = user_data;
+    map->hashfunc = hashfunc;
+    map->equals = equals;
+    map->key_size = round_to(key_size, 8);
+    map->value_size = round_to(value_size, 8);
+    map->element_count = 0;
+    alloc_buckets(map, HASHMAP_INITIAL_BUCKETS);
+}
+
+void hashmap_destroy(HashMap *map) {
+    mew_free(map->alloc, map->buckets);
+}
+
+void hashmap_insert(HashMap *map, const void *key, const void *value) {
+    if ((float)map->element_count / (float)map->bucket_count >= 0.75) {
+        hashmap_expand(map);
+    }
+
+    map->element_count++;
+
+    uint64_t hash = map->hashfunc((void *)key, map->user_data);
+    size_t index = hash % map->bucket_count;
+    size_t map_index = index;
+    while (true) {
+        HashMapBucket *bucket = get_bucket_for_index(map, index);
+        if (!bucket->initialized) {
+            // TODO: Robin-hood hashing
+            bucket->map_index = map_index;
+            memcpy(bucket_key(bucket), key, map->key_size);
+            memcpy(bucket_data(map, bucket), value, map->value_size);
+            bucket->initialized = true;
+            break;
+        } else if (map_equals(map, bucket_key(bucket), key)) {
+            memcpy(bucket_data(map, bucket), value, map->value_size);
+            break;
+        }
+        index++;
+        if (index >= map->bucket_count) {
+            index = 0;
+        }
+    }
+}
+
+void *hashmap_get(HashMap *map, const void *key) {
+    HashMapBucket *bucket = get_bucket_for_key(map, key);
+    if (bucket == NULL) {
+        return NULL;
+    } else {
+        return bucket_data(map, bucket);
+    }
+}
+
+bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value) {
+    HashMapBucket *bucket = get_bucket_for_key(map, key);
+    if (bucket == NULL)
+        return false;
+    bucket->initialized = false;
+    if (found_key != NULL) {
+        void *key_ptr = found_key;
+        memcpy(key_ptr, bucket_key(bucket), map->key_size);
+    }
+    if (value != NULL) {
+        void *value_ptr = value;
+        memcpy(value_ptr, bucket_data(map, bucket), map->value_size);
+    }
+    return true;
+}
+
+bool hashmap_iterate(HashMap *map, hashmap_iter_t iter) {
+    for (size_t i = 0; i < map->bucket_count; i++) {
+        HashMapBucket *bucket = get_bucket_for_index(map, i);
+        if (!bucket->initialized)
+            continue;
+        if (!iter(bucket_key(bucket), bucket_data(map, bucket), map->user_data))
+            return false;
+    }
+    return true;
+}
+
+size_t round_to(size_t value, size_t roundTo) {
+    return (value + (roundTo - 1)) & ~(roundTo - 1);
+}
+
+HashMapBucket *get_bucket_for_index(HashMap *map, size_t index) {
+    size_t size = bucket_size(map);
+    return (HashMapBucket *)((char *)map->buckets + size * index);
+}
+
+HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
+    uint64_t hash = map->hashfunc((void *)key, map->user_data);
+    size_t index = hash % map->bucket_count;
+    size_t map_index = index;
+    while (true) {
+        HashMapBucket *bucket = get_bucket_for_index(map, index);
+        if (!bucket->initialized) {
+            return NULL;
+        }
+        if (bucket->map_index == map_index && map_equals(map, bucket_key(bucket), key)) {
+            return bucket;
+        }
+        index++;
+        if (index >= map->bucket_count) {
+            index = 0;
+        }
+    }
+}
+
+void alloc_buckets(HashMap *map, size_t count) {
+    map->bucket_count = count;
+    size_t size = bucket_size(map);
+    map->buckets = (HashMapBucket *)mew_alloc(map->alloc, size * count);
+    memset(map->buckets, 0, size * count);
+}
+
+void hashmap_expand(HashMap *map) {
+    HashMapBucket *old_buckets = map->buckets;
+    size_t old_count = map->bucket_count;
+    size_t size = bucket_size(map);
+    alloc_buckets(map, old_count * 2);
+    map->element_count = 0;
+    for (size_t i = 0; i < old_count; i++) {
+        HashMapBucket *bucket = (HashMapBucket *)((char *)old_buckets + size * i);
+        if (bucket->initialized) {
+            hashmap_insert(map, bucket_key(bucket), bucket_data(map, bucket));
+        }
+    }
+    mew_free(map->alloc, old_buckets);
+}
+
+size_t bucket_size(HashMap *map) {
+    return round_to(sizeof(HashMapBucket) + map->key_size + map->value_size, 8);
+}
+
+bool map_equals(HashMap *map, const void *a, const void *b) {
+    return (map->equals != NULL && map->equals(a, b, map->user_data)) || memcmp(a, b, map->key_size) == 0;
+}
+
+void *bucket_data(HashMap *map, HashMapBucket *bucket) {
+    char *ptr = (char *)(bucket + 1);
+    return (void *)(ptr + map->key_size);
+}
+
+void *bucket_key(HashMapBucket *bucket) {
+    return bucket + 1;
+}
+
+// djb2 hash algorithm
+uint64_t hashmap_sv_hash(const void *value, void *user_data) {
+    (void)user_data;
+    const MewStringView *sv = (const MewStringView *)value;
+    uint64_t hash = 5381;
+    for (size_t i = 0; i < sv->count; i++) {
+        hash = ((hash << 5) + hash) + (uint64_t)sv->items[i];
+    }
+    return hash;
+}
+
+bool hashmap_sv_equals(const void *a, const void *b, void *user_data) {
+    (void)user_data;
+    const MewStringView *sva = (const MewStringView *)a;
+    const MewStringView *svb = (const MewStringView *)b;
+    return mew_sv_eq_sv(*sva, *svb);
 }
 
 bool mew_cstr_contains(const char *s, char c) {
@@ -958,8 +1173,7 @@ bool mew_tcplistener_native_bind(void *data, const char *host, uint16_t port) {
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET,
-    addr.sin_port = htons(port),
+    addr.sin_family = AF_INET, addr.sin_port = htons(port),
 
     ret = inet_pton(AF_INET, host, &addr.sin_addr);
     if (ret != 1) {
@@ -1052,7 +1266,6 @@ bool mew_tcpstream_native_close(void *data) {
     int sd = (int)(uintptr_t)data;
     return close(sd) == 0;
 }
-
 
 bool mew_tcpstream_set_timeout(MewTcpStream stream, uint32_t seconds) {
     return stream.set_timeout(stream.data, seconds);
