@@ -1,8 +1,6 @@
-#include <mew/containers/vector.h>
-
-#include <stdint.h>
-
-#include <mew/unit.h>
+#define MEWLIB_IMPLEMENTATION
+#define MEW_UNIT
+#include <mewlib.h>
 
 bool is_uint64_t_array_equals(MewVector *vec, uint64_t *array) {
     for (size_t i = 0; i < vec->count; i++) {
@@ -17,7 +15,7 @@ bool is_uint64_t_array_equals(MewVector *vec, uint64_t *array) {
 
 TEST(vector_init, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     mewassert("Vector should be empty", vector.count == 0);
     mewassert("Vector should be empty", vector.capacity == 0);
@@ -29,7 +27,7 @@ TEST(vector_init, {
 
 TEST(vector_push, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     for (size_t i = 1; i <= 1024; i++) {
         mew_vec_push(&vector, (void *)&i);
@@ -44,7 +42,7 @@ TEST(vector_push, {
 
 TEST(vector_reserve, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
     mew_vec_reserve(&vector, 10);
 
     mewassert("Vector should be empty", vector.count == 0);
@@ -62,7 +60,7 @@ TEST(vector_reserve, {
 
 TEST(vector_get, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     for (size_t i = 1; i <= 1024; i++) {
         mew_vec_push(&vector, (void *)&i);
@@ -82,7 +80,7 @@ TEST(vector_get, {
 
 TEST(vector_insert_at, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     for (uint64_t i = 0; i < 5; i++) {
         mew_vec_push(&vector, (void *)&i);
@@ -103,7 +101,7 @@ TEST(vector_insert_at, {
 
 TEST(vector_insert_at_the_end, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     for (uint64_t i = 0; i < 1024; i++) {
         mew_vec_insert_at(&vector, (void *)&i, i);
@@ -116,7 +114,7 @@ TEST(vector_insert_at_the_end, {
 
 TEST(vector_insert_at_the_beginning, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     for (uint64_t i = 0; i < 1024; i++) {
         mew_vec_insert_at(&vector, (void *)&i, 0);
@@ -129,7 +127,7 @@ TEST(vector_insert_at_the_beginning, {
 
 TEST(vector_delete_at, {
     MewVector vector;
-    mew_vec_init(&vector, new_malloc_allocator(), sizeof(uint64_t));
+    mew_vec_init(&vector, mew_malloc_allocator_create(), sizeof(uint64_t));
 
     for (uint64_t i = 0; i < 5; i++) {
         mew_vec_push(&vector, (void *)&i);
@@ -164,13 +162,13 @@ TEST(vector_delete_at, {
 
 TEST(vector_copy_to, {
     MewVector src;
-    mew_vec_init(&src, new_malloc_allocator(), sizeof(u64));
+    mew_vec_init(&src, mew_malloc_allocator_create(), sizeof(u64));
     for (u64 i = 0; i < 10; i++) {
         mew_vec_push(&src, &i);
     }
 
     MewVector dst;
-    mew_vec_init(&dst, new_malloc_allocator(), sizeof(u64));
+    mew_vec_init(&dst, mew_malloc_allocator_create(), sizeof(u64));
 
     mew_vec_copy_to(&dst, &src);
     mewassert("After copy empty vec should now have the same count as source", dst.count == src.count);

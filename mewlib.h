@@ -94,29 +94,6 @@ mew_allocator_calloc_t mew_malloc_calloc;
 mew_allocator_realloc_t mew_malloc_realloc;
 MewAllocator mew_malloc_allocator_create(void);
 
-typedef struct MewArenaRegion MewArenaRegion;
-
-struct MewArenaRegion {
-    MewArenaRegion *next;
-    usize count;
-    usize capacity;
-};
-
-typedef struct {
-    MewArenaRegion *begin;
-    MewArenaRegion *end;
-} MewArena;
-
-mew_allocator_alloc_t mew_arena_alloc;
-mew_allocator_free_t mew_arena_free;
-mew_allocator_calloc_t mew_arena_calloc;
-mew_allocator_realloc_t mew_arena_realloc;
-MewAllocator mew_arena_allocator_create(MewArena *arena);
-
-void mew_arena_free_arena(MewArena *arena);
-MewArenaRegion *mew_new_region(usize capacity);
-void mew_free_region(MewArenaRegion *region);
-
 typedef struct MewVector {
     MewAllocator alloc;
     char *data;
@@ -142,9 +119,12 @@ typedef bool hashmap_equals_t(const void *a, const void *b, void *user_data);
 typedef bool hashmap_iter_t(const void *key, const void *value, void *user_data);
 
 typedef struct HashMapBucket {
+    // TODO: Compress bucket struct
     usize map_index;
     bool initialized;
     char _padding[7];
+    // TODO: Remove data for C++ compatibility
+    char data[];
 } HashMapBucket;
 
 typedef struct HashMap {
@@ -318,6 +298,69 @@ bool mew_tcpstream_write_cstr(MewTcpStream stream, const char *cstr);
 
 // TODO: SSL Socket
 
+#if defined(MEW_UNIT)
+
+#define MEW_STRINGIZE_DETAIL(x) #x
+#define MEW_STRINGIZE(x) MEW_STRINGIZE_DETAIL(x)
+
+#define MEW_TEST_WHERE "File '" __FILE__ "', line " MEW_STRINGIZE(__LINE__)
+
+typedef const char *(mew_test_func_t)(void);
+
+typedef struct MewTest {
+    mew_test_func_t *func;
+    const char *name;
+} MewTest;
+
+#define TEST(test_name, ...)                                                                                           \
+    extern MewTest mew_tests[];                                                                                        \
+                                                                                                                       \
+    static const char *test_##test_name(void) {                                                                        \
+        __VA_ARGS__;                                                                                                   \
+        return NULL;                                                                                                   \
+    }                                                                                                                  \
+                                                                                                                       \
+    __attribute__((constructor)) static void register_##test_name(void) {                                              \
+        mew_tests[__COUNTER__] = (MewTest) {                                                                           \
+            .func = test_##test_name,                                                                                  \
+            .name = "test_" #test_name,                                                                                \
+        };                                                                                                             \
+    }
+
+#define mewassert(message, ...)                                                                                        \
+    do {                                                                                                               \
+        if (!(__VA_ARGS__)) {                                                                                          \
+            return MEW_TEST_WHERE ":\n      Assertion `" #__VA_ARGS__ "` failed: " message;                            \
+        }                                                                                                              \
+    } while (0)
+
+#define mewtest_main(...)                                                                                              \
+    MewTest mew_tests[__COUNTER__];                                                                                    \
+    const size_t mew_tests_count = sizeof(mew_tests) / sizeof(*mew_tests);                                             \
+                                                                                                                       \
+    int main(void) {                                                                                                   \
+        __VA_ARGS__;                                                                                                   \
+                                                                                                                       \
+        size_t passed = 0;                                                                                             \
+        for (size_t i = 0; i < mew_tests_count; i++) {                                                                 \
+            printf("    Running '%s'... ", mew_tests[i].name);                                                         \
+            fflush(stdout);                                                                                            \
+                                                                                                                       \
+            const char *result = mew_tests[i].func();                                                                  \
+            if (result == NULL) {                                                                                      \
+                printf("OK\n");                                                                                        \
+                passed++;                                                                                              \
+            } else {                                                                                                   \
+                printf("FAIL\n\n    %s.\n\n", result);                                                                 \
+            }                                                                                                          \
+        }                                                                                                              \
+                                                                                                                       \
+        printf("\n    Passed: %zu/%zu tests.\n", passed, mew_tests_count);                                             \
+        return passed == mew_tests_count ? 0 : 1;                                                                      \
+    }
+
+#endif // MEW_UNIT
+
 #ifdef __cplusplus
 }
 #endif
@@ -325,17 +368,19 @@ bool mew_tcpstream_write_cstr(MewTcpStream stream, const char *cstr);
 #ifdef MEWLIB_IMPLEMENTATION
 
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <time.h>
 
 #if defined(MEW_POSIX)
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #endif // MEW_POSIX
@@ -436,98 +481,6 @@ MewAllocator mew_malloc_allocator_create(void) {
     };
 
     return mew_allocator_create(NULL, &MEW_MALLOC_TABLE);
-}
-
-#define REGION_DEFAULT_CAPACITY (8 * 1024)
-
-void *mew_arena_alloc(void *data, size_t bytes) {
-    MewArena *arena = (MewArena *)data;
-    size_t size = (bytes + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
-
-    if (arena->begin == NULL) {
-        assert(arena->end == NULL);
-        size_t capacity = REGION_DEFAULT_CAPACITY;
-        if (capacity < size)
-            capacity = size;
-        arena->begin = mew_new_region(capacity);
-        arena->end = arena->begin;
-    }
-
-    while (arena->end->count + size > arena->end->capacity && arena->end->next != NULL) {
-        arena->end = arena->end->next;
-    }
-
-    if (arena->end->count + size > arena->end->capacity) {
-        assert(arena->end->next == NULL);
-        size_t capacity = REGION_DEFAULT_CAPACITY;
-        if (capacity < size)
-            capacity = size;
-        arena->end->next = mew_new_region(capacity);
-        arena->end = arena->end->next;
-    }
-
-    void *result = (&arena->end) + 1 + arena->end->count;
-    arena->end->count += size;
-    return result;
-}
-
-void mew_arena_free(void *data, void *ptr) {
-    (void)data;
-    (void)ptr;
-}
-
-void *mew_arena_calloc(void *data, size_t count, size_t size) {
-    void *new_ptr = mew_arena_alloc(data, count * size);
-    if (new_ptr) {
-        memset(new_ptr, 0, count * size);
-    }
-
-    return new_ptr;
-}
-
-void *mew_arena_realloc(void *data, void *ptr, size_t old_size, size_t new_size) {
-    void *new_ptr = mew_arena_alloc(data, new_size);
-    memcpy(new_ptr, ptr, old_size);
-
-    return new_ptr;
-}
-
-MewAllocator mew_arena_allocator_create(MewArena *arena) {
-    static const MewAllocatorFunctionTable MEWLIB_ARENA_TABLE = {
-        mew_arena_alloc,
-        mew_arena_free,
-        mew_arena_calloc,
-        mew_arena_realloc,
-    };
-
-    return mew_allocator_create(arena, &MEWLIB_ARENA_TABLE);
-}
-
-void mew_arena_free_arena(MewArena *arena) {
-    MewArenaRegion *region = arena->begin;
-    while (region != NULL) {
-        MewArenaRegion *next = region->next;
-        mew_free_region(region);
-        region = next;
-    }
-
-    arena->begin = NULL;
-    arena->end = NULL;
-}
-
-MewArenaRegion *mew_new_region(size_t capacity) {
-    size_t size = sizeof(MewArenaRegion) + sizeof(uintptr_t) * capacity;
-    MewArenaRegion *region = (MewArenaRegion *)malloc(size);
-
-    region->next = NULL;
-    region->count = 0;
-    region->capacity = capacity;
-
-    return region;
-}
-
-void mew_free_region(MewArenaRegion *region) {
-    free(region);
 }
 
 #define MEW_VEC_INITIAL_CAP 128
@@ -676,8 +629,6 @@ void alloc_buckets(HashMap *map, size_t count);
 void hashmap_expand(HashMap *map);
 size_t bucket_size(HashMap *map);
 bool map_equals(HashMap *map, const void *a, const void *b);
-void *bucket_data(HashMap *map, HashMapBucket *bucket);
-void *bucket_key(HashMapBucket *bucket);
 
 void hashmap_init(
     HashMap *map,
@@ -716,12 +667,12 @@ void hashmap_insert(HashMap *map, const void *key, const void *value) {
         if (!bucket->initialized) {
             // TODO: Robin-hood hashing
             bucket->map_index = map_index;
-            memcpy(bucket_key(bucket), key, map->key_size);
-            memcpy(bucket_data(map, bucket), value, map->value_size);
+            memcpy(&bucket->data, key, map->key_size);
+            memcpy((char *)&bucket->data + map->key_size, value, map->value_size);
             bucket->initialized = true;
             break;
-        } else if (map_equals(map, bucket_key(bucket), key)) {
-            memcpy(bucket_data(map, bucket), value, map->value_size);
+        } else if (map_equals(map, &bucket->data, key)) {
+            memcpy(bucket->data + map->key_size, value, map->value_size);
             break;
         }
         index++;
@@ -733,11 +684,10 @@ void hashmap_insert(HashMap *map, const void *key, const void *value) {
 
 void *hashmap_get(HashMap *map, const void *key) {
     HashMapBucket *bucket = get_bucket_for_key(map, key);
-    if (bucket == NULL) {
+    if (bucket == NULL)
         return NULL;
-    } else {
-        return bucket_data(map, bucket);
-    }
+    else
+        return bucket->data + map->key_size;
 }
 
 bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value) {
@@ -746,12 +696,12 @@ bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value) {
         return false;
     bucket->initialized = false;
     if (found_key != NULL) {
-        void *key_ptr = found_key;
-        memcpy(key_ptr, bucket_key(bucket), map->key_size);
+        char *key_ptr = found_key;
+        memcpy(key_ptr, bucket->data, map->key_size);
     }
     if (value != NULL) {
-        void *value_ptr = value;
-        memcpy(value_ptr, bucket_data(map, bucket), map->value_size);
+        char *value_ptr = value;
+        memcpy(value_ptr, bucket->data + map->key_size, map->value_size);
     }
     return true;
 }
@@ -761,7 +711,7 @@ bool hashmap_iterate(HashMap *map, hashmap_iter_t iter) {
         HashMapBucket *bucket = get_bucket_for_index(map, i);
         if (!bucket->initialized)
             continue;
-        if (!iter(bucket_key(bucket), bucket_data(map, bucket), map->user_data))
+        if (!iter(bucket->data, bucket->data + map->key_size, map->user_data))
             return false;
     }
     return true;
@@ -785,7 +735,7 @@ HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
         if (!bucket->initialized) {
             return NULL;
         }
-        if (bucket->map_index == map_index && map_equals(map, bucket_key(bucket), key)) {
+        if (bucket->map_index == map_index && map_equals(map, bucket->data, key)) {
             return bucket;
         }
         index++;
@@ -798,7 +748,7 @@ HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
 void alloc_buckets(HashMap *map, size_t count) {
     map->bucket_count = count;
     size_t size = bucket_size(map);
-    map->buckets = (HashMapBucket *)mew_alloc(map->alloc, size * count);
+    map->buckets = mew_alloc(map->alloc, size * count);
     memset(map->buckets, 0, size * count);
 }
 
@@ -811,7 +761,7 @@ void hashmap_expand(HashMap *map) {
     for (size_t i = 0; i < old_count; i++) {
         HashMapBucket *bucket = (HashMapBucket *)((char *)old_buckets + size * i);
         if (bucket->initialized) {
-            hashmap_insert(map, bucket_key(bucket), bucket_data(map, bucket));
+            hashmap_insert(map, bucket->data, bucket->data + map->key_size);
         }
     }
     mew_free(map->alloc, old_buckets);
@@ -823,15 +773,6 @@ size_t bucket_size(HashMap *map) {
 
 bool map_equals(HashMap *map, const void *a, const void *b) {
     return (map->equals != NULL && map->equals(a, b, map->user_data)) || memcmp(a, b, map->key_size) == 0;
-}
-
-void *bucket_data(HashMap *map, HashMapBucket *bucket) {
-    char *ptr = (char *)(bucket + 1);
-    return (void *)(ptr + map->key_size);
-}
-
-void *bucket_key(HashMapBucket *bucket) {
-    return bucket + 1;
 }
 
 // djb2 hash algorithm
@@ -1098,6 +1039,101 @@ MewStringView mew_cstr_to_sv(const char *cstr) {
 MewStringView mew_sb_to_sv(MewStringBuilder sb) {
     return mew_sv_create(mew_sb_begin(&sb), mew_sb_count(&sb));
 }
+
+static pthread_mutex_t mtx;
+
+void log_init(void) {
+    pthread_mutex_init(&mtx, NULL);
+}
+
+const char *log_level_str(LogLevel level) {
+    switch (level) {
+        case LOG_TRACE:
+            return "TRACE";
+        case LOG_DEBUG:
+            return "DEBUG";
+        case LOG_INFO:
+            return "INFO";
+        case LOG_WARN:
+            return "WARN";
+        case LOG_ERROR:
+            return "ERROR";
+    }
+
+    return "UNKNOWN";
+}
+
+void log_simple(LogLevel level, const char *format, ...) {
+    FILE *stream = stdout;
+    if (level == LOG_WARN || level == LOG_ERROR) {
+        stream = stderr;
+    }
+
+    time_t timer;
+    struct tm timeinfo;
+    time(&timer);
+    localtime_r(&timer, &timeinfo);
+
+    pthread_mutex_lock(&mtx);
+    fprintf(
+        stream,
+        "[%04d:%02d:%02d %02d:%02d:%02d] %s: ",
+        timeinfo.tm_year + 1900,
+        timeinfo.tm_mon + 1,
+        timeinfo.tm_mday,
+        timeinfo.tm_hour,
+        timeinfo.tm_min,
+        timeinfo.tm_sec,
+        log_level_str(level)
+    );
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(stream, format, args);
+    va_end(args);
+
+    fprintf(stream, "\n");
+
+    pthread_mutex_unlock(&mtx);
+}
+
+#ifdef LOG_WITH_FILE
+void log_with_file(LogLevel level, const char *file, int line, const char *format, ...) {
+    FILE *stream = stdout;
+    if (level == LOG_WARN || level == LOG_ERROR) {
+        stream = stderr;
+    }
+
+    // TODO: consider timed lock
+    pthread_mutex_lock(&mtx);
+    time_t my_time;
+    struct tm *timeinfo;
+    time(&my_time);
+    timeinfo = localtime(&my_time);
+
+    fprintf(
+        stream,
+        "[%04d:%02d:%02d %02d:%02d:%02d] %s %s:%d: ",
+        timeinfo->tm_year + 1900,
+        timeinfo->tm_mon + 1,
+        timeinfo->tm_mday,
+        timeinfo->tm_hour,
+        timeinfo->tm_min,
+        timeinfo->tm_sec,
+        log_level_str(level),
+        file,
+        line
+    );
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(stream, format, args);
+    va_end(args);
+
+    fprintf(stream, "\n");
+    pthread_mutex_unlock(&mtx);
+}
+#endif
 
 #if defined(MEW_POSIX)
 

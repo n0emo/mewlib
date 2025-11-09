@@ -4,8 +4,12 @@ clean:
     rm -rf build
 
 [working-directory: '.']
-configure-clang:
-    cmake -S . -B build -G 'Ninja' -DCMAKE_C_COMPILER=clang
+configure-clang *args:
+    cmake -S . -B build -G 'Ninja' -DCMAKE_C_COMPILER=clang {{ args }}
+
+[working-directory: '.']
+configure-apple-clang:
+    cmake -S . -B build -G 'Ninja' -DCMAKE_C_COMPILER=/usr/bin/clang
 
 [working-directory: '.']
 configure-gcc:
@@ -21,8 +25,8 @@ check:
     clang++ --std=c++11 {{ CFLAGS }} -xc++ -DMEWLIB_IMPLEMENTATION -c -o build/mewlib.o mewlib.h
 
 [working-directory: 'build']
-build:
-    cmake --build .
+build *args:
+    cmake --build . {{ args }}
 
 [working-directory: 'build']
 test: build

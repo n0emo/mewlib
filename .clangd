@@ -1,0 +1,4 @@
+CompileFlags:
+  Add:
+    - -DMEWLIB_IMPLEMENTATION
+    - -DMEW_UNIT
