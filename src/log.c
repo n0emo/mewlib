@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <time.h>
 
-static pthread_mutex_t mtx;
+static pthread_mutex_t MEW_LOG_MUTEX;
 
 void log_init(void) {
-    pthread_mutex_init(&mtx, NULL);
+    pthread_mutex_init(&MEW_LOG_MUTEX, NULL);
 }
 
 const char *log_level_str(LogLevel level) {
@@ -39,7 +39,7 @@ void log_simple(LogLevel level, const char *format, ...) {
     time(&timer);
     localtime_r(&timer, &timeinfo);
 
-    pthread_mutex_lock(&mtx);
+    pthread_mutex_lock(&MEW_LOG_MUTEX);
     fprintf(
         stream,
         "[%04d:%02d:%02d %02d:%02d:%02d] %s: ",
@@ -59,7 +59,7 @@ void log_simple(LogLevel level, const char *format, ...) {
 
     fprintf(stream, "\n");
 
-    pthread_mutex_unlock(&mtx);
+    pthread_mutex_unlock(&MEW_LOG_MUTEX);
 }
 
 #ifdef LOG_WITH_FILE
@@ -70,7 +70,7 @@ void log_with_file(LogLevel level, const char *file, int line, const char *forma
     }
 
     // TODO: consider timed lock
-    pthread_mutex_lock(&mtx);
+    pthread_mutex_lock(&MEW_LOG_MUTEX);
     time_t my_time;
     struct tm *timeinfo;
     time(&my_time);
@@ -96,6 +96,6 @@ void log_with_file(LogLevel level, const char *file, int line, const char *forma
     va_end(args);
 
     fprintf(stream, "\n");
-    pthread_mutex_unlock(&mtx);
+    pthread_mutex_unlock(&MEW_LOG_MUTEX);
 }
 #endif

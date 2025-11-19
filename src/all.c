@@ -25,7 +25,9 @@
 #ifdef _WIN32
     #include "core/os/fs_windows.c"
     #include "core/os/socket_windows.c"
+    #include "core/os/threads_windows.c"
 #else
     #include "core/os/fs_posix.c"
     #include "core/os/socket_posix.c"
+    #include "core/os/threads_posix.c"
 #endif
