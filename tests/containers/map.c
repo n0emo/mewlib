@@ -1,12 +1,21 @@
-#include <mew/containers/hashmap.h>
-
+#include <mew/containers/map.h>
 #include <mew/unit.h>
+#include "mew/core/allocators/malloc.h"
 
 #define DEADBEEF ((void *)0xdeadbeef)
 
-bool is_value_for_key_equals(HashMap *map, const char *cstr, uint64_t value) {
+#define MAP_GENERIC_TEST_LIST \
+    MAP_X(test_map_insert) \
+    MAP_X(test_map_get) \
+    MAP_X(test_map_get_from_empty) \
+    MAP_X(test_map_pop) \
+    MAP_X(test_map_insert_same_key) \
+    MAP_X(test_map_iter) \
+    MAP_X(test_map_iter_returns_false_when_iter_fails)
+
+bool is_value_for_key_equals(MewMap map, const char *cstr, uint64_t value) {
     StringView key = cstr_to_sv(cstr);
-    uint64_t *actual_value = hashmap_get(map, &key);
+    uint64_t *actual_value = mew_map_get(map, &key);
     if (actual_value == NULL) {
         return false;
     } else if (*actual_value != value) {
@@ -16,44 +25,21 @@ bool is_value_for_key_equals(HashMap *map, const char *cstr, uint64_t value) {
     }
 }
 
-TEST(hashmap_init, {
-    HashMap map;
-    hashmap_init(&map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint16_t));
-
-    mewassert("Hashmap should have valid hashfunc pointer", map.hashfunc != NULL);
-    mewassert("Hashmap should have valid equals pointer", map.equals != NULL);
-    mewassert("Hashmap should have valid user_data", map.user_data == DEADBEEF);
-    mewassert("Hashmap should have valid key_size", map.key_size = sizeof(StringView));
-    mewassert("Hashmap should have valid value_size ", map.value_size = sizeof(uint16_t));
-    mewassert("Hashmap should be empty", map.element_count == 0);
-    mewassert("Hashmap bucket array should be allocated", map.buckets != NULL && map.bucket_count != 0);
-
-    hashmap_destroy(&map);
-})
-
-TEST(hashmap_insert, {
-    HashMap map;
-    hashmap_init(&map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint16_t));
-
-    Arena arena = {0};
-    Allocator a = new_arena_allocator(&arena);
+const char *test_map_insert(MewMap map) {
+    Allocator a = new_malloc_allocator();
 
     for (size_t i = 0; i < 1024; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * 1337));
         uint16_t value = i * 1337;
-        hashmap_insert(&map, &key, &value);
+        mew_map_insert(map, &key, &value);
     }
 
-    mewassert("Map should have 1024 elements", map.element_count == 1024);
+    mewassert("Map should have 1024 elements", mew_map_count(map) == 1024);
 
-    arena_free_arena(&arena);
-    hashmap_destroy(&map);
-})
+    return NULL;
+}
 
-TEST(hashmap_get, {
-    HashMap map;
-    hashmap_init(&map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));
-
+const char *test_map_get(MewMap map) {
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
 
@@ -62,42 +48,34 @@ TEST(hashmap_get, {
     for (size_t i = 0; i < keys; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * mul));
         uint64_t value = i * mul;
-        hashmap_insert(&map, &key, &value);
+        mew_map_insert(map, &key, &value);
     }
 
     for (size_t i = 0; i < keys; i++) {
         char *key = mem_sprintf(a, "Sample String %zu", i * mul);
-        mewassert("Value should be valid for the given key", is_value_for_key_equals(&map, key, i * mul));
+        mewassert("Value should be valid for the given key", is_value_for_key_equals(map, key, i * mul));
     }
 
     arena_free_arena(&arena);
-    hashmap_destroy(&map);
-})
 
-TEST(hashmap_get_from_empty, {
-    HashMap map;
-    hashmap_init(&map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));
+    return NULL;
+}
 
+const char *test_map_get_from_empty(MewMap map) {
     StringView key = cstr_to_sv("Some key");
-    uint64_t *result = hashmap_get(&map, &key);
+    uint64_t *result = mew_map_get(map, &key);
     mewassert("Hashmap get should return NULL if map is empty", result == NULL);
+    return NULL;
+}
 
-    hashmap_destroy(&map);
-})
-
-
-
-TEST(hashmap_pop, {
-    HashMap map;
-    hashmap_init(&map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));
-
+const char *test_map_pop(MewMap map) {
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
 
     for (size_t i = 0; i < 1024; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * 1337));
         uint64_t value = i * 1337;
-        hashmap_insert(&map, &key, &value);
+        mew_map_insert(map, &key, &value);
     }
 
     StringView found_key;
@@ -105,42 +83,41 @@ TEST(hashmap_pop, {
     bool result;
 
     StringView invalid_key = cstr_to_sv("Invalid key not found in the map");
-    result = hashmap_pop(&map, &invalid_key, &found_key, &found_value);
+    result = mew_map_pop(map, &invalid_key, &found_key, &found_value);
     mewassert("Map pop for invalid key should return false", !result);
 
     StringView valid_key = cstr_to_sv("Sample String 847658");
-    result = hashmap_pop(&map, &valid_key, &found_key, &found_value);
+    result = mew_map_pop(map, &valid_key, &found_key, &found_value);
     mewassert("Map pop for valid key should return true", result);
     mewassert("Map pop for valid key should return valid key", sv_eq_sv(valid_key, found_key));
     mewassert("Map pop for valid key should return valid value", 847658 == found_value);
 
-    result = hashmap_pop(&map, &valid_key, &found_key, &found_value);
+    result = mew_map_pop(map, &valid_key, &found_key, &found_value);
     mewassert("Map pop for valid key one more time should return false", !result);
 
     StringView another_key = cstr_to_sv("Sample String 1337");
-    result = hashmap_pop(&map, &another_key, NULL, NULL);
+    result = mew_map_pop(map, &another_key, NULL, NULL);
     mewassert("Map should not segfault if found parameters are NULL", result);
 
     arena_free_arena(&arena);
-    hashmap_destroy(&map);
-})
 
-TEST(hashmap_insert_same_key, {
-    HashMap map;
+    return NULL;
+}
+
+const char *test_map_insert_same_key(MewMap map) {
     StringView key = cstr_to_sv("Some key");
     uint64_t value = 1337, next_value = 228;
 
-    hashmap_init(&map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));
 
-    hashmap_insert(&map, &key, &value);
-    hashmap_insert(&map, &key, &next_value);
+    mew_map_insert(map, &key, &value);
+    mew_map_insert(map, &key, &next_value);
 
-    uint64_t *result = hashmap_get(&map, &key);
+    uint64_t *result = mew_map_get(map, &key);
     mewassert("Map get should return valid value", result != NULL);
     mewassert("Map get should return last inserted value for the same key", *result == next_value);
 
-    hashmap_destroy(&map);
-})
+    return NULL;
+}
 
 bool hashmap_iter_sum(const void *key_arg, const void *value_arg, void *user_data) {
     uint64_t *sum = user_data;
@@ -152,27 +129,26 @@ bool hashmap_iter_sum(const void *key_arg, const void *value_arg, void *user_dat
     return true;
 }
 
-TEST(hashmap_iter, {
+const char *test_map_iter(MewMap map) {
     uint64_t sum = 0;
 
-    HashMap map;
-    hashmap_init(&map, &sum, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
 
     for (size_t i = 0; i < 50; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * 1337));
         uint64_t value = i;
-        hashmap_insert(&map, &key, &value);
+        mew_map_insert(map, &key, &value);
     }
 
-    bool result = hashmap_iterate(&map, hashmap_iter_sum);
+    bool result = mew_map_iterate(map, hashmap_iter_sum, &sum);
     mewassert("Map iter should return true because all iter calls returned true", result);
     mewassert("Sum variable should contain actual sum after iterating map", sum == 1225);
 
     arena_free_arena(&arena);
-    hashmap_destroy(&map);
-})
+
+    return NULL;
+}
 
 bool hashmap_iter_fail(const void *key_arg, const void *value_arg, void *user_data) {
     (void) key_arg;
@@ -184,11 +160,8 @@ bool hashmap_iter_fail(const void *key_arg, const void *value_arg, void *user_da
     return false;
 }
 
-TEST(hashmap_iter_returns_false_when_iter_fails, {
+const char *test_map_iter_returns_false_when_iter_fails(MewMap map) {
     uint64_t count = 0;
-
-    HashMap map;
-    hashmap_init(&map, &count, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));
 
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
@@ -196,16 +169,15 @@ TEST(hashmap_iter_returns_false_when_iter_fails, {
     for (size_t i = 0; i < 50; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * 1337));
         uint64_t value = i;
-        hashmap_insert(&map, &key, &value);
+        mew_map_insert(map, &key, &value);
     }
 
-    bool result = hashmap_iterate(&map, hashmap_iter_fail);
+    bool result = mew_map_iterate(map, hashmap_iter_fail, &count);
 
     mewassert("Map iter should return false because iter always returns false", !result);
     mewassert("Iter func should be called exactly once because it always fails", count == 1);
 
     arena_free_arena(&arena);
-    hashmap_destroy(&map);
-})
 
-mewtest_main()
+    return NULL;
+}

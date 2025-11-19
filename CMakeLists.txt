@@ -31,15 +31,14 @@ add_compile_options(
     -Wstrict-prototypes
     -Wmissing-prototypes
 
-    $<$<NOT:$<CONFIG:Debug>>:-O2>
-    $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>
+    # <$<NOT:$<CONFIG:Debug>>:-O2>
+    # $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>
 )
 
 add_library(mew STATIC ./src/all.c)
 
 target_compile_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
 target_link_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
-target_link_libraries(mew PRIVATE $<$<CONFIG:Debug>:gcov>)
 
 target_include_directories(mew PUBLIC ./include/)
 
@@ -53,4 +52,3 @@ define_example(html-controlflow "examples/html/controlflow.c")
 define_example(html-attributes "examples/html/attributes.c")
 
 define_example(containers-vector "examples/containers/vector.c")
-

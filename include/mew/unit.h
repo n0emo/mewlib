@@ -10,7 +10,7 @@
 
 #define MEW_TEST_WHERE "File '" __FILE__ "', line " MEW_STRINGIZE(__LINE__)
 
-typedef char *(mew_test_func_t)(void);
+typedef const char *(mew_test_func_t)(void);
 
 typedef struct MewTest {
     mew_test_func_t *func;
@@ -20,7 +20,7 @@ typedef struct MewTest {
 #define TEST(test_name, ...)                                                                                           \
     extern MewTest mew_tests[];                                                                                        \
                                                                                                                        \
-    static char *test_##test_name() {                                                                                  \
+    static const char *test_##test_name() {                                                                            \
         __VA_ARGS__;                                                                                                   \
         return NULL;                                                                                                   \
     }                                                                                                                  \
@@ -51,7 +51,7 @@ typedef struct MewTest {
             printf("    Running '%s'... ", mew_tests[i].name);                                                         \
             fflush(stdout);                                                                                            \
                                                                                                                        \
-            char *result = mew_tests[i].func();                                                                        \
+            const char *result = mew_tests[i].func();                                                                  \
             if (result == NULL) {                                                                                      \
                 printf("OK\n");                                                                                        \
                 passed++;                                                                                              \
