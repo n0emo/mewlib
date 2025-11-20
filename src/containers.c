@@ -1,0 +1,4 @@
+#include "containers/map/hashmap.c"
+#include "containers/map.c"
+#include "containers/rbtree.c"
+#include "containers/vector.c"

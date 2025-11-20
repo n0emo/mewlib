@@ -9,7 +9,7 @@
 #include <mew/core/types.h>
 
 typedef enum MewThreadError {
-    MEW_THREAD_ERROR_SUCCESS = 0,
+    MEW_THREAD_SUCCESS = 0,
     MEW_THREAD_ERROR_PERMISSIONS = 1,
     MEW_THREAD_ERROR_NOT_FOUND = 3,
     MEW_THREAD_ERROR_TRY_AGAIN = 11,
@@ -19,6 +19,8 @@ typedef enum MewThreadError {
     MEW_THREAD_ERROR_DEADLOCK = 35,
     MEW_THREAD_ERROR_UNKNOWN = 0xdeadbeef,
 } MewThreadError;
+
+const char *mew_thread_error_description(MewThreadError error);
 
 /**
  * @struct MewThread
@@ -60,6 +62,11 @@ MewThread mew_thread_current(void);
  * @brief Join the thread and store it's return status in @p return_status
  */
 MewThreadError mew_thread_join(MewThread thread, int *return_status);
+
+/**
+ * @brief Detach thread from current process
+ */
+MewThreadError mew_thread_detach(MewThread thread);
 
 /**
  * @brief Mutex primitive

@@ -6,6 +6,31 @@
 
 #include <pthread.h>
 
+const char *mew_thread_error_description(MewThreadError error) {
+    switch(error) {
+        case MEW_THREAD_SUCCESS:
+            return "success";
+        case MEW_THREAD_ERROR_PERMISSIONS:
+            return "operation not permitted";
+        case MEW_THREAD_ERROR_NOT_FOUND:
+            return "resource not found";
+        case MEW_THREAD_ERROR_TRY_AGAIN:
+            return "resource temporarily unavailable";
+        case MEW_THREAD_ERROR_OUT_OF_MEMORY:
+            return "could not allocate memory";
+        case MEW_THREAD_ERROR_BUSY:
+            return "resource busy";
+        case MEW_THREAD_ERROR_INVALID_ARGUMENT:
+            return "invalid argument";
+        case MEW_THREAD_ERROR_DEADLOCK:
+            return "deadlock prevented";
+        case MEW_THREAD_ERROR_UNKNOWN:
+            return "unknown";
+    }
+
+    return "unknown";
+}
+
 typedef int(mew_thread_func_t)(void *arg);
 
 typedef struct MewThreadFuncWrapperContext {
@@ -50,12 +75,17 @@ MewThreadError mew_thread_join(MewThread thread, int *return_status) {
     int result = pthread_join(pthread, &value);
 
     if (result == 0 ) {
-        free(thread);
         if (return_status != NULL) {
             *return_status = (int)(int64_t)value;
         }
     }
 
+    return mew_threads_error_from_pthread(result);
+}
+
+MewThreadError mew_thread_detach(MewThread thread) {
+    pthread_t pthread = (pthread_t)thread;
+    int result = pthread_detach(pthread);
     return mew_threads_error_from_pthread(result);
 }
 
@@ -129,7 +159,7 @@ MewThreadError mew_cond_notify_all(MewCond cond) {
 MewThreadError mew_threads_error_from_pthread(int error) {
     switch (error) {
         case 0:
-            return MEW_THREAD_ERROR_SUCCESS;
+            return MEW_THREAD_SUCCESS;
         case EPERM:
             return MEW_THREAD_ERROR_PERMISSIONS;
         case ESRCH:
@@ -152,5 +182,6 @@ MewThreadError mew_threads_error_from_pthread(int error) {
 void *thread_func_wrapper(void *arg) {
     MewThreadFuncWrapperContext *ctx = arg;
     int result = ctx->func(ctx->user_arg);
+    free(ctx);
     return (void *)(int64_t)result;
 }

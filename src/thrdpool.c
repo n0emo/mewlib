@@ -1,24 +1,49 @@
-#include "mew/thrdpool.h"
+#include <mew/thrdpool.h>
 
 #include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mew/log.h"
+#include <mew/log.h>
 
-void queue_init(ThreadPoolQueue *queue) {
-    queue->first = NULL;
-    queue->last = NULL;
-    queue->count = 0;
-    queue->about_to_destroy = false;
-    pthread_mutex_init(&queue->mutex, NULL);
-    pthread_cond_init(&queue->not_empty, NULL);
+MewThreadError queue_init(ThreadPoolQueue *queue) {
+    MewThreadError error;
+
+    memset(queue, 0, sizeof(*queue));
+
+    error = mew_mutex_init(&queue->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        goto error;
+    }
+
+    error = mew_cond_init(&queue->not_empty);
+    if (error != MEW_THREAD_SUCCESS) {
+        goto error;
+    }
+
+    return MEW_THREAD_SUCCESS;
+
+error:
+    if (queue->mtx != NULL) {
+        mew_mutex_destroy(queue->mtx);
+    }
+    if (queue->not_empty != NULL) {
+        mew_cond_destroy(queue->not_empty);
+    }
+
+    return error;
 }
 
-void queue_destroy(ThreadPoolQueue *queue) {
-    pthread_mutex_destroy(&queue->mutex);
-    pthread_cond_destroy(&queue->not_empty);
+MewThreadError queue_destroy(ThreadPoolQueue *queue) {
+    MewThreadError error = mew_mutex_destroy(&queue->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        return error;
+    }
+
+    // If mew_mutex_destroy succeeded, this cond destroying should also succeed
+    mew_cond_destroy(&queue->not_empty);
+
     ThreadPoolJob *node = queue->first;
     ThreadPoolJob *next = NULL;
     while (node) {
@@ -26,101 +51,191 @@ void queue_destroy(ThreadPoolQueue *queue) {
         free(node);
         node = next;
     }
+
+    return MEW_THREAD_SUCCESS;
 }
 
-void queue_push(ThreadPoolQueue *queue, ThreadPoolJob job) {
-    pthread_mutex_lock(&queue->mutex);
+MewThreadError queue_push(ThreadPoolQueue *queue, ThreadPoolJob job) {
+    MewThreadError error = mew_mutex_lock(queue->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        return error;
+    }
 
     ThreadPoolJob *node = malloc(sizeof(*node));
     memcpy(node, &job, sizeof(*node));
 
-    if (queue->count == 0) {
+    if (queue->count_ == 0) {
         queue->first = node;
         queue->last = node;
-        queue->count += 1;
+        queue->count_ += 1;
     } else {
         queue->last->next = node;
         queue->last = node;
-        queue->count += 1;
+        queue->count_ += 1;
     }
-    pthread_mutex_unlock(&queue->mutex);
-    pthread_cond_signal(&queue->not_empty);
+
+    mew_mutex_unlock(queue->mtx);
+    mew_cond_notify(queue->not_empty);
+
+    return MEW_THREAD_SUCCESS;
 }
 
-ThreadPoolJob queue_pop(ThreadPoolQueue *queue, bool *ok) {
-    ThreadPoolJob result = {0};
-    pthread_mutex_lock(&queue->mutex);
-    while (queue->count == 0) {
-        if (queue->about_to_destroy) {
-            if (ok != NULL)
-                *ok = false;
-            return result;
-        }
-        pthread_cond_wait(&queue->not_empty, &queue->mutex);
+MewThreadError queue_pop(ThreadPoolQueue *queue, ThreadPoolJob *result) {
+    MewThreadError error = mew_mutex_lock(queue->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        return error;
     }
 
-    assert(queue->count > 0);
-    queue->count -= 1;
+    while (queue->count_ == 0) {
+        if (queue->about_to_destroy_) {
+            mew_mutex_unlock(queue->mtx);
+            return MEW_THREAD_ERROR_INVALID_ARGUMENT;
+        }
+
+        mew_cond_wait(queue->not_empty, queue->mtx);
+    }
+
+    assert(queue->count_ > 0);
+    queue->count_ -= 1;
     ThreadPoolJob *first = queue->first;
     queue->first = queue->first->next;
-    memcpy(&result, first, sizeof(result));
+    memcpy(result, first, sizeof(*result));
     free(first);
 
-    pthread_mutex_unlock(&queue->mutex);
+    mew_mutex_unlock(queue->mtx);
 
-    if (ok != NULL)
-        *ok = true;
-    return result;
+    return MEW_THREAD_SUCCESS;
 }
 
-static void *thread_func(void *arg) {
+static int thread_func(void *arg) {
+    MewThreadError error;
+    ThreadPoolJob job;
+
     ThreadPool *pool = (ThreadPool *)arg;
-    pthread_t current_thrd = pthread_self();
+    MewThread current_thrd = mew_thread_current();
 
-    pool->threads_alive += 1;
+    error = mew_mutex_lock(pool->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        log_error("Error spawning thread in pool: %s", mew_thread_error_description(error));
+        return (int)error;
+    }
+    pool->threads_alive_ += 1;
+    mew_mutex_unlock(pool->mtx);
 
-    while (!pool->cancel) {
-        ThreadPoolJob job = queue_pop(&pool->queue, NULL);
-        if (pool->cancel)
-            break;
+repeat:
 
-        int res = job.executor(job.arg);
+    error = queue_pop(&pool->queue, &job);
+    if (error != MEW_THREAD_SUCCESS) {
+        goto end;
+    }
 
-        if (res != 0) {
-            log_error("Job returned status %d (thread %" PRIu64 ")", res, (uint64_t)current_thrd);
+    error = mew_mutex_lock(pool->mtx);
+    assert(error == MEW_THREAD_SUCCESS);
+
+    if (pool->cancel_) {
+        error = mew_mutex_unlock(pool->mtx);
+        assert(error == MEW_THREAD_SUCCESS);
+
+        goto end;
+    }
+
+    error = mew_mutex_unlock(pool->mtx);
+    assert(error == MEW_THREAD_SUCCESS);
+
+    int res = job.executor(job.arg);
+
+    if (res != 0) {
+        log_error("Job returned status %d (thread %" PRIu64 ")", res, (uint64_t)current_thrd);
+    }
+
+    error = mew_mutex_lock(pool->mtx);
+    assert(error == MEW_THREAD_SUCCESS);
+
+    if (!pool->cancel_) {
+        error = mew_mutex_unlock(pool->mtx);
+        assert(error == MEW_THREAD_SUCCESS);
+
+        goto repeat;
+    }
+
+    error = mew_mutex_unlock(pool->mtx);
+    assert(error == MEW_THREAD_SUCCESS);
+
+end:
+
+    error = mew_mutex_lock(pool->mtx);
+    assert(error == MEW_THREAD_SUCCESS);
+
+    pool->threads_alive_ -= 1;
+
+    error = mew_mutex_unlock(pool->mtx);
+    assert(error == MEW_THREAD_SUCCESS);
+
+    if (error != MEW_THREAD_SUCCESS) {
+        log_error("Error executing thread in pool: %s", mew_thread_error_description(error));
+    }
+
+    return (int)error;
+}
+
+MewThreadError thrdpool_init(ThreadPool *pool, size_t thread_count) {
+    MewThreadError error;
+    usize i = 0;
+
+    memset(pool, 0, sizeof(*pool));
+
+    error = queue_init(&pool->queue);
+    if (error != MEW_THREAD_SUCCESS) {
+        goto error;
+    }
+
+    pool->thread_count_ = thread_count;
+    pool->threads = malloc(sizeof(pool->threads[0]) * thread_count);
+
+    for (i = 0; i < thread_count; i++) {
+        error = mew_thread_create(&pool->threads[i], thread_func, pool);
+        if (error != MEW_THREAD_SUCCESS) {
+            goto error;
         }
     }
 
-    pool->threads_alive -= 1;
-    return 0;
+error:
+    if (pool->threads != NULL) {
+        free(pool->threads);
+    }
+
+    for (usize j = 0; j < i; j++) {
+        mew_thread_detach(pool->threads[j]);
+    }
+
+    return error;
 }
 
-void thrdpool_init(ThreadPool *pool, size_t thread_count) {
-    queue_init(&pool->queue);
-    pool->thread_count = thread_count;
-    pool->threads = malloc(sizeof(pthread_t) * thread_count);
-    pool->threads_alive = 0;
-    pool->cancel = false;
-    for (size_t i = 0; i < thread_count; i++) {
-        pthread_create(&pool->threads[i], NULL, thread_func, pool);
-    }
-}
+MewThreadError thrdpool_destroy(ThreadPool *pool) {
+    MewThreadError error;
 
-void thrdpool_destroy(ThreadPool *pool) {
-    pool->queue.about_to_destroy = true;
-    pool->cancel = true;
-    while (pool->threads_alive > 0) {
-        pthread_cond_broadcast(&pool->queue.not_empty);
+    error = mew_mutex_lock(pool->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        return error;
     }
-    for (size_t i = 0; i < pool->thread_count; i++) {
-        void *res;
-        pthread_join(pool->threads[i], &res);
+
+    pool->queue.about_to_destroy_ = true;
+    pool->cancel_ = true;
+    mew_mutex_unlock(pool->mtx);
+
+    while (pool->threads_alive_ > 0) {
+        mew_cond_notify_all(pool->queue.not_empty);
     }
-    queue_destroy(&pool->queue);
+    for (size_t i = 0; i < pool->thread_count_; i++) {
+        int res;
+        mew_thread_join(pool->threads[i], &res);
+    }
+    error = queue_destroy(&pool->queue);
     free(pool->threads);
+    return error;
 }
 
-void thrdpool_add_job(ThreadPool *pool, JobExecutor *executor, void *arg) {
+MewThreadError thrdpool_add_job(ThreadPool *pool, JobExecutor *executor, void *arg) {
     ThreadPoolJob job = {executor, arg, NULL};
-    queue_push(&pool->queue, job);
+    return queue_push(&pool->queue, job);
 }

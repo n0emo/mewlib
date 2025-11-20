@@ -1,9 +1,10 @@
 #ifndef MEW_INCLUDE_MEW_THRDPOOL_H_
 #define MEW_INCLUDE_MEW_THRDPOOL_H_
 
-#include <pthread.h>
-#include <stdatomic.h>
 #include <stdbool.h>
+
+#include <mew/core/types.h>
+#include <mew/core/os/threads.h>
 
 typedef int(JobExecutor)(void *arg);
 
@@ -16,27 +17,28 @@ typedef struct ThreadPoolJob {
 typedef struct ThreadPoolQueue {
     ThreadPoolJob *first;
     ThreadPoolJob *last;
-    atomic_size_t count;
-    pthread_mutex_t mutex;
-    pthread_cond_t not_empty;
-    atomic_bool about_to_destroy;
+    usize count_;
+    MewMutex mtx;
+    MewCond not_empty;
+    bool about_to_destroy_;
 } ThreadPoolQueue;
 
-void queue_init(ThreadPoolQueue *queue);
-void queue_destroy(ThreadPoolQueue *queue);
-void queue_push(ThreadPoolQueue *queue, ThreadPoolJob job);
-ThreadPoolJob queue_pop(ThreadPoolQueue *queue, bool *ok);
+MewThreadError queue_init(ThreadPoolQueue *queue);
+MewThreadError queue_destroy(ThreadPoolQueue *queue);
+MewThreadError queue_push(ThreadPoolQueue *queue, ThreadPoolJob job);
+MewThreadError queue_pop(ThreadPoolQueue *queue, ThreadPoolJob *result);
 
 typedef struct ThreadPool {
     ThreadPoolQueue queue;
-    pthread_t *threads;
-    size_t thread_count;
-    atomic_size_t threads_alive;
-    atomic_bool cancel;
+    MewThread *threads;
+    usize thread_count_;
+    usize threads_alive_;
+    bool cancel_;
+    MewMutex mtx;
 } ThreadPool;
 
-void thrdpool_init(ThreadPool *pool, size_t thread_count);
-void thrdpool_destroy(ThreadPool *pool);
-void thrdpool_add_job(ThreadPool *pool, JobExecutor *executor, void *arg);
+MewThreadError thrdpool_init(ThreadPool *pool, size_t thread_count);
+MewThreadError thrdpool_destroy(ThreadPool *pool);
+MewThreadError thrdpool_add_job(ThreadPool *pool, JobExecutor *executor, void *arg);
 
 #endif // MEW_INCLUDE_MEW_THRDPOOL_H_
