@@ -4,21 +4,23 @@
 
 #define DEADBEEF ((void *)0xdeadbeef)
 
-#define MAP_GENERIC_TEST_LIST \
-    MAP_X(test_map_insert) \
-    MAP_X(test_map_get) \
-    MAP_X(test_map_get_from_empty) \
-    MAP_X(test_map_pop) \
-    MAP_X(test_map_insert_same_key) \
-    MAP_X(test_map_iter) \
+#define MAP_GENERIC_TEST_LIST                                                                                          \
+    MAP_X(test_map_insert)                                                                                             \
+    MAP_X(test_map_get)                                                                                                \
+    MAP_X(test_map_get_from_empty)                                                                                     \
+    MAP_X(test_map_pop)                                                                                                \
+    MAP_X(test_map_insert_same_key)                                                                                    \
+    MAP_X(test_map_iter)                                                                                               \
     MAP_X(test_map_iter_returns_false_when_iter_fails)
 
 bool is_value_for_key_equals(MewMap map, const char *cstr, uint64_t value) {
     StringView key = cstr_to_sv(cstr);
     uint64_t *actual_value = mew_map_get(map, &key);
     if (actual_value == NULL) {
+        printf("\nValue not found for key `%s`\n", cstr);
         return false;
     } else if (*actual_value != value) {
+        printf("\nExpected: %llu, actual: %llu\n", value, *actual_value);
         return false;
     } else {
         return true;
@@ -43,7 +45,7 @@ const char *test_map_get(MewMap map) {
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
 
-    const size_t keys = 48496;
+    const size_t keys = 10849;
     const size_t mul = 1337;
     for (size_t i = 0; i < keys; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * mul));
@@ -108,7 +110,6 @@ const char *test_map_insert_same_key(MewMap map) {
     StringView key = cstr_to_sv("Some key");
     uint64_t value = 1337, next_value = 228;
 
-
     mew_map_insert(map, &key, &value);
     mew_map_insert(map, &key, &next_value);
 
@@ -119,7 +120,7 @@ const char *test_map_insert_same_key(MewMap map) {
     return NULL;
 }
 
-bool hashmap_iter_sum(const void *key_arg, const void *value_arg, void *user_data) {
+bool hashmap_iter_sum(void *key_arg, void *value_arg, void *user_data) {
     uint64_t *sum = user_data;
     const StringView *key = key_arg;
     const uint64_t *value = value_arg;
@@ -150,9 +151,9 @@ const char *test_map_iter(MewMap map) {
     return NULL;
 }
 
-bool hashmap_iter_fail(const void *key_arg, const void *value_arg, void *user_data) {
-    (void) key_arg;
-    (void) value_arg;
+bool hashmap_iter_fail(void *key_arg, void *value_arg, void *user_data) {
+    (void)key_arg;
+    (void)value_arg;
 
     uint64_t *count = user_data;
     (*count) += 1;

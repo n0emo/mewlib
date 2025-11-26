@@ -3,22 +3,22 @@
 
 #include <mew/core.h>
 
-typedef bool(mew_map_iter_t)(const void *key, const void *value, void *user_data);
+typedef bool(MewMapIter)(void *key, void *value, void *user_data);
 
-typedef void(mew_map_destroy_t)(void *map);
-typedef void(mew_map_insert_t)(void *map, const void *key, const void *value);
-typedef bool(mew_map_pop_t)(void *map, const void *key, void *found_key, void *value);
-typedef void *(mew_map_get_t)(void *map, const void *key);
-typedef bool(mew_map_iterate_t)(void *map, mew_map_iter_t iter, void *user_Data);
-typedef usize (mew_map_count_t)(void *map);
+typedef void MewMapDestroy(void *map);
+typedef void MewMapInsert(void *map, const void *key, const void *value);
+typedef bool MewMapPop(void *map, const void *key, void *found_key, void *value);
+typedef void *MewMapGet(void *map, const void *key);
+typedef bool MewMapIterate(void *map, MewMapIter iter, void *user_Data);
+typedef usize MewMapCount(void *map);
 
 typedef struct MewMapFuncTable {
-    mew_map_destroy_t *destroy;
-    mew_map_insert_t *insert;
-    mew_map_pop_t *pop;
-    mew_map_get_t *get;
-    mew_map_iterate_t *iterate;
-    mew_map_count_t *count;
+    MewMapDestroy *destroy;
+    MewMapInsert *insert;
+    MewMapPop *pop;
+    MewMapGet *get;
+    MewMapIterate *iterate;
+    MewMapCount *count;
 } MewMapFuncTable;
 
 typedef struct MewMap {
@@ -30,7 +30,7 @@ void mew_map_destroy(MewMap map);
 void mew_map_insert(MewMap map, const void *key, const void *value);
 bool mew_map_pop(MewMap map, const void *key, void *found_key, void *value);
 void *mew_map_get(MewMap map, const void *key);
-bool mew_map_iterate(MewMap map, mew_map_iter_t iter, void *user_data);
+bool mew_map_iterate(MewMap map, MewMapIter iter, void *user_data);
 usize mew_map_count(MewMap map);
 
 #endif // MEW_INCLUDE_MEW_CONTAINERS_MAP_H_

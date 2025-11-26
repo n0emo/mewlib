@@ -17,7 +17,9 @@ void sb_destroy(StringBuilder *sb);
 void sb_append_char(StringBuilder *sb, char c);
 void sb_append_buf(StringBuilder *sb, const char *buf, size_t size);
 void sb_append_cstr(StringBuilder *sb, const char *s);
+void sb_appendf(StringBuilder *sb, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 StringBuilder sb_dup(Allocator alloc, StringBuilder sb);
+bool sb_eq_sb(StringBuilder a, StringBuilder b);
 
 #define sb_count(sb) (sb)->vec.count
 #define sb_begin(sb) (sb)->vec.data

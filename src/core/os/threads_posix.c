@@ -7,7 +7,7 @@
 #include <pthread.h>
 
 const char *mew_thread_error_description(MewThreadError error) {
-    switch(error) {
+    switch (error) {
         case MEW_THREAD_SUCCESS:
             return "success";
         case MEW_THREAD_ERROR_PERMISSIONS:
@@ -74,7 +74,7 @@ MewThreadError mew_thread_join(MewThread thread, int *return_status) {
     void *value;
     int result = pthread_join(pthread, &value);
 
-    if (result == 0 ) {
+    if (result == 0) {
         if (return_status != NULL) {
             *return_status = (int)(int64_t)value;
         }

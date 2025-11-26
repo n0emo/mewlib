@@ -7,4 +7,3 @@
 #include <mew/core/strings/sv.h>
 
 #endif // INCLUDE_MEW_CORE_STRINGS_H_
-

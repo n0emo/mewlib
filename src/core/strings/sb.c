@@ -1,5 +1,9 @@
 #include <mew/core/strings/sb.h>
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <mew/core/allocators/malloc.h>
 
 void sb_init(StringBuilder *sb, Allocator alloc) {
@@ -43,9 +47,32 @@ void sb_append_cstr(StringBuilder *sb, const char *s) {
     }
 }
 
+void sb_appendf(StringBuilder *sb, const char *fmt, ...) {
+    va_list args;
+    va_list args_copy;
+
+    va_start(args, fmt);
+    va_copy(args_copy, args);
+    int n = vsnprintf(NULL, 0, fmt, args_copy);
+    va_end(args_copy);
+
+    char buf[n + 1];
+    vsprintf(buf, fmt, args);
+    sb_append_cstr(sb, buf);
+    va_end(args);
+}
+
 StringBuilder sb_dup(Allocator alloc, StringBuilder sb) {
     MewVector vec;
     mew_vec_init(&vec, alloc, sizeof(char));
     mew_vec_copy_to(&vec, &sb.vec);
-    return (StringBuilder) { vec };
+    return (StringBuilder) {vec};
+}
+
+bool sb_eq_sb(StringBuilder a, StringBuilder b) {
+    if (a.vec.count != b.vec.count) {
+        return false;
+    }
+
+    return strncmp(a.vec.data, b.vec.data, a.vec.count) == 0;
 }

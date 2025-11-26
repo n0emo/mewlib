@@ -70,8 +70,11 @@ void mew_vec_copy_to(MewVector *dst, const MewVector *src);
         mew_vec_push(&vec->inner, &element);                                                                           \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)                                                                                             \
-    ) static inline void mew_vec_##type##_insert_at(MewVector_##type *vec, type element, size_t index) {               \
+    __attribute__((unused)) static inline void mew_vec_##type##_insert_at(                                             \
+        MewVector_##type *vec,                                                                                         \
+        type element,                                                                                                  \
+        size_t index                                                                                                   \
+    ) {                                                                                                                \
         mew_vec_insert_at(&vec->inner, &element, index);                                                               \
     }                                                                                                                  \
                                                                                                                        \

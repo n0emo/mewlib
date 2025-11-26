@@ -19,15 +19,14 @@ TEST(hashmap_init, {
 #define MAP_X(test)                                                                                                    \
     TEST(test##_hashmap, {                                                                                             \
         HashMap hash_map;                                                                                              \
-        hashmap_init(&hash_map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint16_t));   \
+        hashmap_init(&hash_map, DEADBEEF, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(uint64_t));   \
         MewMap map = mew_map_from_hashmap(&hash_map);                                                                  \
                                                                                                                        \
-        const char *result;                                                                                            \
-        if ((result = test(map))) {                                                                                    \
-            return result;                                                                                             \
-        }                                                                                                              \
+        const char *result = test(map);                                                                                \
                                                                                                                        \
         hashmap_destroy(&hash_map);                                                                                    \
+                                                                                                                       \
+        return result;                                                                                                 \
     })
 MAP_GENERIC_TEST_LIST
 #undef MAP_X

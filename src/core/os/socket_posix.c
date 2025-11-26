@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-
 #ifndef __APPLE__
     #include <sys/sendfile.h>
 #endif

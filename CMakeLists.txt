@@ -8,6 +8,7 @@ include(CTest)
 enable_testing()
 
 add_subdirectory(tests)
+add_subdirectory(examples)
 
 add_compile_options(
     -g
@@ -37,18 +38,7 @@ add_compile_options(
 
 add_library(mew STATIC ./src/all.c)
 
-target_compile_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
-target_link_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
+# target_compile_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
+# target_link_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
 
 target_include_directories(mew PUBLIC ./include/)
-
-macro(define_example name src)
-    add_executable(${name} ${src})
-    target_link_libraries(${name} mew)
-endmacro()
-
-define_example(html-basic "examples/html/basic.c")
-define_example(html-controlflow "examples/html/controlflow.c")
-define_example(html-attributes "examples/html/attributes.c")
-
-define_example(containers-vector "examples/containers/vector.c")

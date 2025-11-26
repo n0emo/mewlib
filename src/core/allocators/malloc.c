@@ -19,7 +19,7 @@ void *malloc_calloc(void *data, size_t count, size_t size) {
 
 void *malloc_realloc(void *data, void *ptr, size_t old_size, size_t new_size) {
     (void)data;
-    (void) old_size;
+    (void)old_size;
 
     return realloc(ptr, new_size);
 }

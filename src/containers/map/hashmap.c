@@ -110,7 +110,7 @@ bool hashmap_pop(void *data, const void *key, void *found_key, void *value) {
     return true;
 }
 
-bool hashmap_iterate(void *data, mew_map_iter_t iter, void *user_data) {
+bool hashmap_iterate(void *data, MewMapIter iter, void *user_data) {
     HashMap *map = data;
     for (size_t i = 0; i < map->bucket_count; i++) {
         HashMapBucket *bucket = get_bucket_for_index(map, i);

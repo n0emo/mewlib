@@ -37,7 +37,7 @@ void hashmap_destroy(void *map);
 void hashmap_insert(void *map, const void *key, const void *value);
 bool hashmap_pop(void *map, const void *key, void *found_key, void *value);
 void *hashmap_get(void *map, const void *key);
-bool hashmap_iterate(void *map, mew_map_iter_t iter, void *user_data);
+bool hashmap_iterate(void *map, MewMapIter iter, void *user_data);
 usize hashmap_count(void *map);
 
 MewMap mew_map_from_hashmap(HashMap *map);

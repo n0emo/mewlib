@@ -26,14 +26,16 @@ void *mem_realloc(Allocator allocator, void *ptr, size_t old_size, size_t new_si
 }
 
 char *mem_sprintf(Allocator allocator, const char *format, ...) {
-    va_list args;
+    va_list args, args_copy;
     va_start(args, format);
+
+    va_copy(args_copy, args);
     int size = vsnprintf(NULL, 0, format, args);
-    va_end(args);
+    va_end(args_copy);
 
     assert(size >= 0);
+
     char *result = (char *)mem_alloc(allocator, (size_t)size + 1);
-    va_start(args, format);
     vsnprintf(result, (size_t)size + 1, format, args);
     va_end(args);
 

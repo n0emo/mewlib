@@ -25,7 +25,7 @@ void *mew_map_get(MewMap map, const void *key) {
     return map.funcs->get(map.data, key);
 }
 
-bool mew_map_iterate(MewMap map, mew_map_iter_t iter, void *user_data) {
+bool mew_map_iterate(MewMap map, MewMapIter iter, void *user_data) {
     assert(map.funcs != NULL);
     assert(map.funcs->insert != NULL);
     return map.funcs->iterate(map.data, iter, user_data);
