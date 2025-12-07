@@ -24,7 +24,7 @@ typedef struct HttpHeaderMapEntries {
 typedef struct {
     Allocator alloc;
     HttpHeaderMapEntries entries;
-    HashMap indices;
+    MewHashMap indices;
 } HttpHeaderMap;
 
 void http_headermap_init(HttpHeaderMap *map, Allocator alloc);

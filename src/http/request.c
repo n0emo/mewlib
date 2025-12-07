@@ -18,7 +18,7 @@ void http_path_init(HttpPathParams *params, Allocator alloc) {
         .key_size = sizeof(StringView),
         .value_size = sizeof(StringView),
         .user_data = (void *)params,
-        .equals = hashmap_sv_equals,
+        .equals = mew_hashmap_sv_equals,
     };
     mew_assocmap_init(&params->map, options);
     params->is_set = false;

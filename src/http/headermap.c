@@ -10,19 +10,19 @@ void http_headermap_init(HttpHeaderMap *map, Allocator alloc) {
         .alloc = alloc,
         .key_size = sizeof(StringView),
         .value_size = sizeof(size_t),
-        .hashfunc = hashmap_sv_hash,
-        .equals = hashmap_sv_equals,
+        .hashfunc = mew_hashmap_sv_hash,
+        .equals = mew_hashmap_sv_equals,
         .user_data = (void *)map,
 
     };
-    hashmap_init(&map->indices, options);
+    mew_hashmap_init(&map->indices, options);
 
     map->entries = (HttpHeaderMapEntries) {0};
     map->alloc = alloc;
 }
 
 void http_headermap_insert(HttpHeaderMap *map, HttpHeader header) {
-    void *value = hashmap_get(&map->indices, &header.key);
+    void *value = mew_hashmap_get(&map->indices, &header.key);
     if (value == NULL) {
         HttpHeaderMapEntry entry = {
             .header = header,
@@ -30,7 +30,7 @@ void http_headermap_insert(HttpHeaderMap *map, HttpHeader header) {
         };
         ARRAY_APPEND(&map->entries, entry, map->alloc);
         size_t index = map->entries.count - 1;
-        hashmap_insert(&map->indices, &header.key, &index);
+        mew_hashmap_insert(&map->indices, &header.key, &index);
     } else {
         size_t index = *(size_t *)value;
         HttpHeaderMapEntry *entry = &map->entries.items[index];
