@@ -1,6 +1,6 @@
 #ifdef _WIN32
-    #include "os/fs_windows.c"
     #include "os/socket_windows.c"
+    #include "os/fs_windows.c"
     #include "os/threads_windows.c"
 #else
     #include "os/fs_posix.c"
