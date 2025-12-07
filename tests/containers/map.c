@@ -13,7 +13,7 @@
     MAP_X(test_map_iter)                                                                                               \
     MAP_X(test_map_iter_returns_false_when_iter_fails)
 
-bool is_value_for_key_equals(MewMap map, const char *cstr, uint64_t value) {
+bool is_value_for_key_equals(MewMap *map, const char *cstr, uint64_t value) {
     StringView key = cstr_to_sv(cstr);
     uint64_t *actual_value = mew_map_get(map, &key);
     if (actual_value == NULL) {
@@ -27,7 +27,7 @@ bool is_value_for_key_equals(MewMap map, const char *cstr, uint64_t value) {
     }
 }
 
-const char *test_map_insert(MewMap map) {
+const char *test_map_insert(MewMap *map) {
     Allocator a = new_malloc_allocator();
 
     for (size_t i = 0; i < 1024; i++) {
@@ -36,12 +36,12 @@ const char *test_map_insert(MewMap map) {
         mew_map_insert(map, &key, &value);
     }
 
-    mewassert("Map should have 1024 elements", mew_map_count(map) == 1024);
+    mewassert("Map should have 1024 elements", map->count == 1024);
 
     return NULL;
 }
 
-const char *test_map_get(MewMap map) {
+const char *test_map_get(MewMap *map) {
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
 
@@ -63,14 +63,14 @@ const char *test_map_get(MewMap map) {
     return NULL;
 }
 
-const char *test_map_get_from_empty(MewMap map) {
+const char *test_map_get_from_empty(MewMap *map) {
     StringView key = cstr_to_sv("Some key");
     uint64_t *result = mew_map_get(map, &key);
     mewassert("Hashmap get should return NULL if map is empty", result == NULL);
     return NULL;
 }
 
-const char *test_map_pop(MewMap map) {
+const char *test_map_pop(MewMap *map) {
     Arena arena = {0};
     Allocator a = new_arena_allocator(&arena);
 
@@ -106,7 +106,7 @@ const char *test_map_pop(MewMap map) {
     return NULL;
 }
 
-const char *test_map_insert_same_key(MewMap map) {
+const char *test_map_insert_same_key(MewMap *map) {
     StringView key = cstr_to_sv("Some key");
     uint64_t value = 1337, next_value = 228;
 
@@ -130,7 +130,7 @@ bool hashmap_iter_sum(void *key_arg, void *value_arg, void *user_data) {
     return true;
 }
 
-const char *test_map_iter(MewMap map) {
+const char *test_map_iter(MewMap *map) {
     uint64_t sum = 0;
 
     Arena arena = {0};
@@ -161,7 +161,7 @@ bool hashmap_iter_fail(void *key_arg, void *value_arg, void *user_data) {
     return false;
 }
 
-const char *test_map_iter_returns_false_when_iter_fails(MewMap map) {
+const char *test_map_iter_returns_false_when_iter_fails(MewMap *map) {
     uint64_t count = 0;
 
     Arena arena = {0};

@@ -1,7 +1,7 @@
 #ifndef MEW_INCLUDE_MEW_HTTP_REQUEST_H_
 #define MEW_INCLUDE_MEW_HTTP_REQUEST_H_
 
-#include <mew/containers/map/hashmap.h>
+#include <mew/containers/map/assoc.h>
 #include <mew/core/alloc.h>
 #include <mew/core/os/socket.h>
 #include <mew/core/utils.h>
@@ -9,7 +9,7 @@
 #include <mew/http/headermap.h>
 
 typedef struct HttpPathParams {
-    HashMap map;
+    MewAssocMap map;
     bool is_set;
 } HttpPathParams;
 

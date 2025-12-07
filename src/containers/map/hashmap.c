@@ -6,138 +6,150 @@
 
 #define HASHMAP_INITIAL_BUCKETS 16
 
-static MewMapFuncTable HASHMAP_FUNC_TABLE = {
-    .destroy = &hashmap_destroy,
-    .insert = &hashmap_insert,
-    .pop = &hashmap_pop,
-    .get = &hashmap_get,
-    .iterate = &hashmap_iterate,
-    .count = &hashmap_count,
-};
-
-MewMap mew_map_from_hashmap(HashMap *map) {
-    return (MewMap) {
-        .data = map,
-        .funcs = &HASHMAP_FUNC_TABLE,
-    };
-}
-
-size_t round_to(size_t value, size_t roundTo);
-HashMapBucket *get_bucket_for_index(HashMap *map, size_t index);
+static inline HashMapBucket *get_bucket_for_index(HashMap *map, size_t index);
+static inline char *get_bucket_key(HashMapBucket *bucket);
+static inline char *get_bucket_value(HashMap *map, HashMapBucket *bucket);
 HashMapBucket *get_bucket_for_key(HashMap *map, const void *key);
 void alloc_buckets(HashMap *map, size_t count);
 void hashmap_expand(HashMap *map);
 size_t bucket_size(HashMap *map);
 bool map_equals(HashMap *map, const void *a, const void *b);
 
-void hashmap_init(
-    HashMap *map,
-    void *user_data,
-    hashfunc_t *hashfunc,
-    hashmap_equals_t *equals,
-    size_t key_size,
-    size_t value_size
-) {
-    map->alloc = new_malloc_allocator();
-    map->user_data = user_data;
-    map->hashfunc = hashfunc;
-    map->equals = equals;
-    map->key_size = round_to(key_size, 8);
-    map->value_size = round_to(value_size, 8);
-    map->element_count = 0;
+void hashmap_destroy_overload(MewMap *map) {
+    hashmap_destroy((HashMap *)map);
+}
+
+void hashmap_insert_overload(MewMap *map, const void *key, const void *value) {
+    hashmap_insert((HashMap *)map, key, value);
+}
+
+bool hashmap_pop_overload(MewMap *map, const void *key, void *found_key, void *value) {
+    return hashmap_pop((HashMap *)map, key, found_key, value);
+}
+
+void *hashmap_get_overload(MewMap *map, const void *key) {
+    return hashmap_get((HashMap *)map, key);
+}
+
+bool hashmap_iterate_overload(MewMap *map, MewMapIter iter, void *user_data) {
+    return hashmap_iterate((HashMap *)map, iter, user_data);
+}
+
+void hashmap_init(HashMap *map, MewHashMapOptions options) {
+    memset(map, 0, sizeof(*map));
+
+    MewMapBaseOptions base_options = {
+        .alloc = new_malloc_allocator(),
+        .funcs =
+            (MewMapFuncTable) {
+                .destroy = &hashmap_destroy_overload,
+                .insert = &hashmap_insert_overload,
+                .pop = &hashmap_pop_overload,
+                .get = &hashmap_get_overload,
+                .iterate = &hashmap_iterate_overload,
+            },
+        .key_size = options.key_size,
+        .value_size = options.value_size,
+        .user_data = options.user_data,
+    };
+    mew_map_base_init(&map->base, base_options);
+
+    map->hashfunc = options.hashfunc;
+    map->equals = options.equals;
     alloc_buckets(map, HASHMAP_INITIAL_BUCKETS);
 }
 
-void hashmap_destroy(void *data) {
-    HashMap *map = data;
-    mem_free(map->alloc, map->buckets);
+void hashmap_destroy(HashMap *map) {
+    mem_free(map->base.alloc, map->buckets);
 }
 
-void hashmap_insert(void *data, const void *key, const void *value) {
-    HashMap *map = data;
-    if ((float)map->element_count / (float)map->bucket_count >= 0.75) {
+void hashmap_insert(HashMap *map, const void *key, const void *value) {
+    if ((float)map->base.count / (float)map->bucket_count >= 0.75) {
         hashmap_expand(map);
     }
 
-    map->element_count++;
+    map->base.count++;
 
-    uint64_t hash = map->hashfunc((void *)key, map->user_data);
+    uint64_t hash = map->hashfunc((void *)key, map->base.user_data);
     size_t index = hash % map->bucket_count;
     size_t map_index = index;
+
     while (true) {
         HashMapBucket *bucket = get_bucket_for_index(map, index);
+
         if (!bucket->initialized) {
             // TODO: Robin-hood hashing
             bucket->map_index = map_index;
-            memcpy(&bucket->data, key, map->key_size);
-            memcpy((char *)&bucket->data + map->key_size, value, map->value_size);
+            memcpy(get_bucket_key(bucket), key, map->base.key_size);
+            memcpy(get_bucket_value(map, bucket), value, map->base.value_size);
             bucket->initialized = true;
             break;
-        } else if (map_equals(map, &bucket->data, key)) {
-            memcpy(bucket->data + map->key_size, value, map->value_size);
+        } else if (map_equals(map, get_bucket_key(bucket), key)) {
+            memcpy(get_bucket_value(map, bucket), value, map->base.value_size);
             break;
         }
+
         index++;
+
         if (index >= map->bucket_count) {
             index = 0;
         }
     }
 }
 
-void *hashmap_get(void *data, const void *key) {
-    HashMap *map = data;
+void *hashmap_get(HashMap *map, const void *key) {
     HashMapBucket *bucket = get_bucket_for_key(map, key);
-    if (bucket == NULL)
+    if (bucket == NULL) {
         return NULL;
-    else
-        return bucket->data + map->key_size;
+    } else {
+        return (char *)bucket + sizeof(HashMapBucket) + map->base.key_size;
+    }
 }
 
-bool hashmap_pop(void *data, const void *key, void *found_key, void *value) {
-    HashMap *map = data;
+bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value) {
     HashMapBucket *bucket = get_bucket_for_key(map, key);
-    if (bucket == NULL)
+    if (bucket == NULL) {
         return false;
+    }
+
     bucket->initialized = false;
     if (found_key != NULL) {
         char *key_ptr = found_key;
-        memcpy(key_ptr, bucket->data, map->key_size);
+        memcpy(key_ptr, get_bucket_key(bucket), map->base.key_size);
     }
     if (value != NULL) {
         char *value_ptr = value;
-        memcpy(value_ptr, bucket->data + map->key_size, map->value_size);
+        memcpy(value_ptr, get_bucket_value(map, bucket), map->base.value_size);
     }
     return true;
 }
 
-bool hashmap_iterate(void *data, MewMapIter iter, void *user_data) {
-    HashMap *map = data;
+bool hashmap_iterate(HashMap *map, MewMapIter iter, void *user_data) {
     for (size_t i = 0; i < map->bucket_count; i++) {
         HashMapBucket *bucket = get_bucket_for_index(map, i);
         if (!bucket->initialized)
             continue;
-        if (!iter(bucket->data, bucket->data + map->key_size, user_data))
+        if (!iter(get_bucket_key(bucket), get_bucket_value(map, bucket), user_data))
             return false;
     }
     return true;
 }
 
-usize hashmap_count(void *data) {
-    HashMap *map = data;
-    return map->element_count;
-}
-
-size_t round_to(size_t value, size_t roundTo) {
-    return (value + (roundTo - 1)) & ~(roundTo - 1);
-}
-
-HashMapBucket *get_bucket_for_index(HashMap *map, size_t index) {
+static inline HashMapBucket *get_bucket_for_index(HashMap *map, size_t index) {
     size_t size = bucket_size(map);
-    return (HashMapBucket *)((char *)map->buckets + size * index);
+    return (HashMapBucket *)(((char *)map->buckets) + size * index);
+}
+
+static inline char *get_bucket_key(HashMapBucket *bucket) {
+    return (char *)bucket + sizeof(HashMapBucket);
+}
+
+static inline char *get_bucket_value(HashMap *map, HashMapBucket *bucket) {
+    return (char *)bucket + sizeof(HashMapBucket) + map->base.key_size;
 }
 
 HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
-    uint64_t hash = map->hashfunc((void *)key, map->user_data);
+    uint64_t hash = map->hashfunc((void *)key, map->base.user_data);
     size_t index = hash % map->bucket_count;
     size_t map_index = index;
     while (true) {
@@ -145,7 +157,7 @@ HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
         if (!bucket->initialized) {
             return NULL;
         }
-        if (bucket->map_index == map_index && map_equals(map, bucket->data, key)) {
+        if (bucket->map_index == map_index && map_equals(map, get_bucket_key(bucket), key)) {
             return bucket;
         }
         index++;
@@ -158,7 +170,7 @@ HashMapBucket *get_bucket_for_key(HashMap *map, const void *key) {
 void alloc_buckets(HashMap *map, size_t count) {
     map->bucket_count = count;
     size_t size = bucket_size(map);
-    map->buckets = mem_alloc(map->alloc, size * count);
+    map->buckets = mem_alloc(map->base.alloc, size * count);
     memset(map->buckets, 0, size * count);
 }
 
@@ -167,22 +179,22 @@ void hashmap_expand(HashMap *map) {
     size_t old_count = map->bucket_count;
     size_t size = bucket_size(map);
     alloc_buckets(map, old_count * 2);
-    map->element_count = 0;
+    map->base.count = 0;
     for (size_t i = 0; i < old_count; i++) {
         HashMapBucket *bucket = (HashMapBucket *)((char *)old_buckets + size * i);
         if (bucket->initialized) {
-            hashmap_insert(map, bucket->data, bucket->data + map->key_size);
+            hashmap_insert(map, get_bucket_key(bucket), get_bucket_value(map, bucket));
         }
     }
-    mem_free(map->alloc, old_buckets);
+    mem_free(map->base.alloc, old_buckets);
 }
 
 size_t bucket_size(HashMap *map) {
-    return round_to(sizeof(HashMapBucket) + map->key_size + map->value_size, 8);
+    return sizeof(HashMapBucket) + map->base.key_size + map->base.value_size;
 }
 
 bool map_equals(HashMap *map, const void *a, const void *b) {
-    return (map->equals != NULL && map->equals(a, b, map->user_data)) || memcmp(a, b, map->key_size) == 0;
+    return (map->equals != NULL && map->equals(a, b, map->base.user_data)) || memcmp(a, b, map->base.key_size) == 0;
 }
 
 // djb2 hash algorithm

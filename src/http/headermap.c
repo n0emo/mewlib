@@ -6,8 +6,17 @@ hashfunc_t header_hash;
 hashmap_equals_t header_equals;
 
 void http_headermap_init(HttpHeaderMap *map, Allocator alloc) {
-    hashmap_init(&map->indices, (void *)map, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(size_t));
-    map->indices.alloc = alloc;
+    MewHashMapOptions options = {
+        .alloc = alloc,
+        .key_size = sizeof(StringView),
+        .value_size = sizeof(size_t),
+        .hashfunc = hashmap_sv_hash,
+        .equals = hashmap_sv_equals,
+        .user_data = (void *)map,
+
+    };
+    hashmap_init(&map->indices, options);
+
     map->entries = (HttpHeaderMapEntries) {0};
     map->alloc = alloc;
 }

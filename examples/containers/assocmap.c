@@ -33,29 +33,30 @@ int main(void) {
     };
 
     MewAssocMap assocmap = mew_assocmap_new(opts);
-    MewMap map = mew_map_from_assocmap(&assocmap);
 
     for (i32 i = 1; i <= 20; i++) {
         StringBuilder key = sb_new_default();
         sb_appendf(&key, "Sample String %d", i);
         i64 value = i + '0';
         printf("Inserting `" SB_FMT "`: %llu\n", SB_ARG(key), value);
-        mew_map_insert(map, &key, &value);
+        mew_t_map_insert(StringBuilder, i64, (MewMap *)&assocmap, key, value);
     }
 
-    printf("Bucket size = %zu\n", assocmap.key_size + assocmap.value_size);
-    printf("Count       = %zu\n", mew_map_count(map));
+    printf("Bucket size = %zu\n", assocmap.base.key_size + assocmap.base.value_size);
+    printf("Count       = %zu\n", assocmap.base.count);
 
     {
         StringBuilder key = sb_new_default();
         sb_append_cstr(&key, "Sample String 10");
-        i64 *val = mew_map_get(map, &key);
+        i64 *val;
+        mew_t_map_get(StringBuilder, i64, &assocmap, key, val);
         printf("Value for key `" SB_FMT "`: %llu\n", SB_ARG(key), *val);
         sb_destroy(&key);
     }
 
-    mew_map_iterate(map, iter_destroy, NULL);
-    mew_map_destroy(map);
+    bool ok;
+    mew_t_map_iterate(StringBuilder, i64, &assocmap, iter_destroy, NULL, &ok);
+    mew_t_map_destroy(StringBuilder, i64, &assocmap);
 
     return 0;
 }

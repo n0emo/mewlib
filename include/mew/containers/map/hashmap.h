@@ -7,40 +7,39 @@ typedef uint64_t hashfunc_t(const void *value, void *user_data);
 typedef bool hashmap_equals_t(const void *a, const void *b, void *user_data);
 
 typedef struct HashMapBucket {
-    usize map_index;
-    bool initialized;
-    char _padding[7];
-    char data[];
+    bool initialized : 1;
+    usize map_index : sizeof(usize) * 8 - 1;
 } HashMapBucket;
 
 typedef struct HashMap {
-    Allocator alloc;
+    MewMap base;
+    HashMapBucket *buckets;
+    size_t bucket_count;
     hashfunc_t *hashfunc;
     hashmap_equals_t *equals;
-    void *user_data;
-    size_t key_size;
-    size_t value_size;
-    size_t bucket_count;
-    size_t element_count;
-    HashMapBucket *buckets;
 } HashMap;
 
-void hashmap_init(
-    HashMap *map,
-    void *user_data,
-    hashfunc_t *hashfunc,
-    hashmap_equals_t *equals,
-    size_t key_size,
-    size_t value_size
-);
-void hashmap_destroy(void *map);
-void hashmap_insert(void *map, const void *key, const void *value);
-bool hashmap_pop(void *map, const void *key, void *found_key, void *value);
-void *hashmap_get(void *map, const void *key);
-bool hashmap_iterate(void *map, MewMapIter iter, void *user_data);
-usize hashmap_count(void *map);
+typedef struct MewHashMapOptions {
+    Allocator alloc;
+    void *user_data;
+    hashfunc_t *hashfunc;
+    hashmap_equals_t *equals;
+    size_t key_size;
+    size_t value_size;
+} MewHashMapOptions;
 
-MewMap mew_map_from_hashmap(HashMap *map);
+void hashmap_init(HashMap *map, MewHashMapOptions options);
+void hashmap_destroy(HashMap *map);
+void hashmap_insert(HashMap *map, const void *key, const void *value);
+void *hashmap_get(HashMap *map, const void *key);
+bool hashmap_pop(HashMap *map, const void *key, void *found_key, void *value);
+bool hashmap_iterate(HashMap *map, MewMapIter iter, void *user_data);
+
+MewMapDestroy hashmap_destroy_overload;
+MewMapInsert hashmap_insert_overload;
+MewMapPop hashmap_pop_overload;
+MewMapGet hashmap_get_overload;
+MewMapIterate hashmap_iterate_overload;
 
 hashfunc_t hashmap_sv_hash;
 hashmap_equals_t hashmap_sv_equals;

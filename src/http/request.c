@@ -13,17 +13,23 @@ bool read_request_header_lines(MewTcpStream stream, StringBuilder *header, Strin
 void request_trim_cr(StringView *sv);
 
 void http_path_init(HttpPathParams *params, Allocator alloc) {
-    hashmap_init(&params->map, NULL, hashmap_sv_hash, hashmap_sv_equals, sizeof(StringView), sizeof(StringView));
-    params->map.alloc = alloc;
+    MewAssocMapOptions options = {
+        .alloc = alloc,
+        .key_size = sizeof(StringView),
+        .value_size = sizeof(StringView),
+        .user_data = (void *)params,
+        .equals = hashmap_sv_equals,
+    };
+    mew_assocmap_init(&params->map, options);
     params->is_set = false;
 }
 
 void http_path_set(HttpPathParams *params, StringView key, StringView value) {
-    hashmap_insert(&params->map, &key, &value);
+    mew_assocmap_insert(&params->map, &key, &value);
 }
 
 StringView *http_path_get(HttpPathParams *params, StringView key) {
-    return hashmap_get(&params->map, &key);
+    return mew_assocmap_get(&params->map, &key);
 }
 
 #define BUF_CAP 8192
