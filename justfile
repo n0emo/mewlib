@@ -1,3 +1,8 @@
+set windows-shell := ["powershell"]
+
+default:
+    just --list
+
 clean:
     rm -rf build
 
@@ -37,3 +42,14 @@ valgrind name: build
 
 clean-build-gcc: clean configure-gcc build
 clean-build-clang: clean configure-clang build
+
+[unix]
+@format:
+    find . -type f -regex '.*\.\(c\|cpp\|h\|hpp\)' -exec clang-format -style=file -i {} +
+
+[windows]
+@format:
+    Get-ChildItem -Recurse -Include *.c, *.cpp, *.h, *.hpp -File | ForEach-Object { \
+        Write-Host "Formatting: $($_.FullName)" -ForegroundColor Cyan \
+        clang-format -style=file -i $_.FullName \
+    }

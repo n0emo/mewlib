@@ -1,14 +1,15 @@
-#include "mew/log.h"
+#include <mew/log.h>
 
-#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
 
-static pthread_mutex_t MEW_LOG_MUTEX;
+#include <mew/core/os/threads.h>
+
+static MewMutex MEW_LOG_MUTEX;
 
 void log_init(void) {
-    pthread_mutex_init(&MEW_LOG_MUTEX, NULL);
+    mew_mutex_init(&MEW_LOG_MUTEX);
 }
 
 const char *log_level_str(LogLevel level) {
@@ -37,9 +38,15 @@ void log_simple(LogLevel level, const char *format, ...) {
     time_t timer;
     struct tm timeinfo;
     time(&timer);
-    localtime_r(&timer, &timeinfo);
 
-    pthread_mutex_lock(&MEW_LOG_MUTEX);
+// TODO: abstract to OS headers
+#ifdef _WIN32
+    localtime_s(&timeinfo, &timer);
+#else
+    localtime_r(&timer, &timeinfo);
+#endif
+
+    mew_mutex_lock(MEW_LOG_MUTEX);
     fprintf(
         stream,
         "[%04d:%02d:%02d %02d:%02d:%02d] %s: ",
@@ -59,7 +66,7 @@ void log_simple(LogLevel level, const char *format, ...) {
 
     fprintf(stream, "\n");
 
-    pthread_mutex_unlock(&MEW_LOG_MUTEX);
+    mew_mutex_unlock(&MEW_LOG_MUTEX);
 }
 
 #ifdef LOG_WITH_FILE

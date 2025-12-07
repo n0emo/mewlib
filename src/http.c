@@ -3,5 +3,4 @@
 #include "http/headermap.c"
 #include "http/request.c"
 #include "http/response.c"
-#include "http/router.c"
 #include "http/server.c"

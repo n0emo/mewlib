@@ -10,6 +10,33 @@
 
 #define MEW_TEST_WHERE "File '" __FILE__ "', line " MEW_STRINGIZE(__LINE__)
 
+#ifdef __cplusplus
+    #define INITIALIZER(f)                                                                                             \
+        static void f(void);                                                                                           \
+        struct f##_t_ {                                                                                                \
+            f##_t_(void) {                                                                                             \
+                f();                                                                                                   \
+            }                                                                                                          \
+        };                                                                                                             \
+        static f##_t_ f##_;                                                                                            \
+        static void f(void)
+#elif defined(_MSC_VER)
+    #pragma section(".CRT$XCU", read)
+    #define INITIALIZER2_(f, p)                                                                                        \
+        static void f(void);                                                                                           \
+        __declspec(allocate(".CRT$XCU")) void (*f##_)(void) = f;                                                       \
+        __pragma(comment(linker, "/include:" p #f "_")) static void f(void)
+    #ifdef _WIN64
+        #define INITIALIZER(f) INITIALIZER2_(f, "")
+    #else
+        #define INITIALIZER(f) INITIALIZER2_(f, "_")
+    #endif
+#else
+    #define INITIALIZER(f)                                                                                             \
+        static void f(void) __attribute__((constructor));                                                              \
+        static void f(void)
+#endif
+
 typedef const char *(mew_test_func_t)(void);
 
 typedef struct MewTest {
@@ -20,12 +47,12 @@ typedef struct MewTest {
 #define TEST(test_name, ...)                                                                                           \
     extern MewTest mew_tests[];                                                                                        \
                                                                                                                        \
-    static const char *test_##test_name() {                                                                            \
+    static const char *test_##test_name(void) {                                                                        \
         __VA_ARGS__;                                                                                                   \
         return NULL;                                                                                                   \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((constructor)) static void register_##test_name() {                                                  \
+    INITIALIZER(register_##test_name) {                                                                                \
         mew_tests[__COUNTER__] = (MewTest) {                                                                           \
             .func = test_##test_name,                                                                                  \
             .name = "test_" #test_name,                                                                                \

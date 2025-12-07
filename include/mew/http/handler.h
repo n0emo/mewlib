@@ -7,11 +7,6 @@
 /**
  * Returns false in case of the error
  */
-typedef bool http_request_handle_func_t(HttpRequest *request, HttpResponse *response);
-
-typedef struct HttpRequestHandler {
-    http_request_handle_func_t *handler;
-    void *user_data;
-} HttpRequestHandler;
+typedef bool HttpRequestHandler(HttpRequest *request, HttpResponse *response, void *user_data);
 
 #endif // MEW_INCLUDE_MEW_HTTP_HANDLER_H_

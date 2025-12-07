@@ -1,8 +1,9 @@
 #ifndef INCLUDE_MEW_CORE_STRINGS_SB_H_
 #define INCLUDE_MEW_CORE_STRINGS_SB_H_
 
-#include <mew/core/alloc.h>
 #include <mew/containers/vector.h>
+#include <mew/core/alloc.h>
+#include <mew/core/os/macros.h>
 #include <mew/core/strings/sv.h>
 
 typedef struct StringBuilder {
@@ -10,15 +11,29 @@ typedef struct StringBuilder {
 } StringBuilder;
 
 void sb_init(StringBuilder *sb, Allocator alloc);
+
 void sb_init_default(StringBuilder *sb);
+
 StringBuilder sb_new(Allocator alloc);
+
 StringBuilder sb_new_default(void);
+
 void sb_destroy(StringBuilder *sb);
+
 void sb_append_char(StringBuilder *sb, char c);
+
 void sb_append_buf(StringBuilder *sb, const char *buf, size_t size);
+
 void sb_append_cstr(StringBuilder *sb, const char *s);
-void sb_appendf(StringBuilder *sb, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+
+void sb_appendf(StringBuilder *sb, MEW_FORMAT_STRING(const char *fmt), ...)
+#ifdef __GNUC__
+    __attribute__((format(printf, 2, 3)))
+#endif
+    ;
+
 StringBuilder sb_dup(Allocator alloc, StringBuilder sb);
+
 bool sb_eq_sb(StringBuilder a, StringBuilder b);
 
 #define sb_count(sb) (sb)->vec.count

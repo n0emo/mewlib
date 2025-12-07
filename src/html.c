@@ -9,6 +9,8 @@ Html html_begin(void) {
     html.arena = (Arena) {0};
     html.alloc = new_arena_allocator(&html.arena);
     sb_init(&html.sb, html.alloc);
+    mew_vec_init(&html.attributes, html.alloc, sizeof(Attribute));
+    mew_vec_init(&html.classes, html.alloc, sizeof(StringView));
     sb_append_cstr(&html.sb, "<!DOCTYPE html>\n");
     html_tag_begin(&html, "html");
     return html;
@@ -20,7 +22,7 @@ void html_end(Html *html) {
 }
 
 void html_push_attribute(Html *html, Attribute attribute) {
-    ARRAY_APPEND(&html->attributes, attribute, html->alloc);
+    mew_vec_push(&html->attributes, &attribute);
 }
 
 void html_push_attribute_cstrs(Html *html, const char *name, const char *value) {
@@ -32,7 +34,7 @@ void html_push_attribute_cstrs(Html *html, const char *name, const char *value) 
 }
 
 void html_push_class(Html *html, StringView cls) {
-    ARRAY_APPEND(&html->classes, cls, html->alloc);
+    mew_vec_push(&html->classes, &cls);
 }
 
 void html_push_class_cstr(Html *html, const char *cls) {
@@ -133,10 +135,10 @@ void html_append_current_indentation(Html *html) {
 void html_render_class(Html *html) {
     if (html->classes.count > 0) {
         sb_append_cstr(&html->sb, " class=\"");
-        sb_append_sv(&html->sb, html->classes.items[0]);
+        sb_append_sv(&html->sb, *(StringView *)mew_vec_get(&html->classes, 0));
         for (size_t i = 1; i < html->classes.count; i++) {
             sb_append_char(&html->sb, ' ');
-            sb_append_sv(&html->sb, html->classes.items[i]);
+            sb_append_sv(&html->sb, *(StringView *)mew_vec_get(&html->classes, 0));
         }
         sb_append_cstr(&html->sb, "\"");
     }
@@ -145,9 +147,9 @@ void html_render_class(Html *html) {
 void html_render_attributes(Html *html) {
     for (size_t i = 0; i < html->attributes.count; i++) {
         sb_append_cstr(&html->sb, " ");
-        sb_append_sv(&html->sb, html->attributes.items[i].name);
+        sb_append_sv(&html->sb, ((Attribute *)mew_vec_get(&html->attributes, i))->name);
         sb_append_cstr(&html->sb, "=\"");
-        sb_append_sv(&html->sb, html->attributes.items[i].value);
+        sb_append_sv(&html->sb, ((Attribute *)mew_vec_get(&html->attributes, i))->value);
         sb_append_cstr(&html->sb, "\"");
     }
 }

@@ -1,4 +1,5 @@
 macro(define_example name src)
+    set(CMAKE_C_STANDARD 11)
     add_executable(${name} ${src})
     target_link_libraries(${name} mew)
 endmacro()

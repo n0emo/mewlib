@@ -3,6 +3,7 @@
 
 #include <mew/core/types.h>
 #include <mew/core/alloc.h>
+#include <mew/core/os/macros.h>
 
 typedef struct MewVector {
     Allocator alloc;
@@ -36,27 +37,27 @@ void mew_vec_copy_to(MewVector *dst, const MewVector *src);
 //         - sort
 
 #define mew_vec_define_for_type(type)                                                                                  \
-    __attribute__((unused)) typedef struct MewVector_##type {                                                          \
+    MEW_ATTRIBUTE_UNUSED typedef struct MewVector_##type {                                                             \
         MewVector inner;                                                                                               \
     } MewVector_##type;                                                                                                \
                                                                                                                        \
-    __attribute__((unused)) static inline void mew_vec_##type##_init(MewVector_##type *vec, Allocator alloc) {         \
+    MEW_ATTRIBUTE_UNUSED static inline void mew_vec_##type##_init(MewVector_##type *vec, Allocator alloc) {            \
         mew_vec_init(&vec->inner, alloc, sizeof(type));                                                                \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline void mew_vec_##type##_destroy(MewVector_##type *vec) {                       \
+    MEW_ATTRIBUTE_UNUSED static inline void mew_vec_##type##_destroy(MewVector_##type *vec) {                          \
         mew_vec_destroy(&vec->inner);                                                                                  \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline void mew_vec_##type##_reserve(MewVector_##type *vec, size_t new_capacity) {  \
+    MEW_ATTRIBUTE_UNUSED static inline void mew_vec_##type##_reserve(MewVector_##type *vec, size_t new_capacity) {     \
         mew_vec_reserve(&vec->inner, new_capacity);                                                                    \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline type *mew_vec_##type##_get_ptr(MewVector_##type *vec, size_t index) {        \
+    MEW_ATTRIBUTE_UNUSED static inline type *mew_vec_##type##_get_ptr(MewVector_##type *vec, size_t index) {           \
         return (type *)mew_vec_get(&vec->inner, index);                                                                \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline type mew_vec_##type##_get(MewVector_##type *vec, size_t index) {             \
+    MEW_ATTRIBUTE_UNUSED static inline type mew_vec_##type##_get(MewVector_##type *vec, size_t index) {                \
         type item;                                                                                                     \
         char *ptr = (char *)mew_vec_get(&vec->inner, index);                                                           \
         char *item_ptr = (char *)&item;                                                                                \
@@ -66,11 +67,11 @@ void mew_vec_copy_to(MewVector *dst, const MewVector *src);
         return item;                                                                                                   \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline void mew_vec_##type##_push(MewVector_##type *vec, type element) {            \
+    MEW_ATTRIBUTE_UNUSED static inline void mew_vec_##type##_push(MewVector_##type *vec, type element) {               \
         mew_vec_push(&vec->inner, &element);                                                                           \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline void mew_vec_##type##_insert_at(                                             \
+    MEW_ATTRIBUTE_UNUSED static inline void mew_vec_##type##_insert_at(                                                \
         MewVector_##type *vec,                                                                                         \
         type element,                                                                                                  \
         size_t index                                                                                                   \
@@ -78,7 +79,7 @@ void mew_vec_copy_to(MewVector *dst, const MewVector *src);
         mew_vec_insert_at(&vec->inner, &element, index);                                                               \
     }                                                                                                                  \
                                                                                                                        \
-    __attribute__((unused)) static inline void mew_vec_##type##_delete_at(MewVector_##type *vec, size_t index) {       \
+    MEW_ATTRIBUTE_UNUSED static inline void mew_vec_##type##_delete_at(MewVector_##type *vec, size_t index) {          \
         mew_vec_delete_at(&vec->inner, index);                                                                         \
     }
 

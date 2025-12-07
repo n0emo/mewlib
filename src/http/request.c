@@ -103,7 +103,6 @@ bool read_request_header_lines(MewTcpStream stream, StringBuilder *header, Strin
     while (true) {
         ptrdiff_t bytes = mew_tcpstream_read(stream, buf, BUF_CAP);
         if (bytes < 0) {
-            log_error("%s", strerror(errno));
             return false;
         }
 

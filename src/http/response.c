@@ -18,9 +18,10 @@ bool http_response_write(HttpResponse *response, MewTcpStream stream) {
     if (!mew_tcpstream_write_cstr(stream, "\r\n"))
         return false;
 
-    const HttpHeaderMapEntries *entries = &response->headers.entries;
+    MewVector *entries = &response->headers.entries;
     for (size_t i = 0; i < entries->count; i++) {
-        const HttpHeader *h = (const HttpHeader *)&entries->items[i].header;
+        HttpHeaderMapEntry *entry = mew_vec_get(entries, i);
+        const HttpHeader *h = &entry->header;
 
         if (!mew_tcpstream_write(stream, h->key.items, h->key.count))
             return false;

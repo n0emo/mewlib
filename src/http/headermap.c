@@ -17,7 +17,7 @@ void http_headermap_init(HttpHeaderMap *map, Allocator alloc) {
     };
     mew_hashmap_init(&map->indices, options);
 
-    map->entries = (HttpHeaderMapEntries) {0};
+    mew_vec_init(&map->entries, alloc, sizeof(HttpHeaderMapEntry));
     map->alloc = alloc;
 }
 
@@ -28,12 +28,13 @@ void http_headermap_insert(HttpHeaderMap *map, HttpHeader header) {
             .header = header,
             .next = NULL,
         };
-        ARRAY_APPEND(&map->entries, entry, map->alloc);
+        mew_vec_push(&map->entries, &entry);
+
         size_t index = map->entries.count - 1;
         mew_hashmap_insert(&map->indices, &header.key, &index);
     } else {
         size_t index = *(size_t *)value;
-        HttpHeaderMapEntry *entry = &map->entries.items[index];
+        HttpHeaderMapEntry *entry = mew_vec_get(&map->entries, index);
         while (entry->next != NULL) {
             entry = entry->next;
         }

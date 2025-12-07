@@ -136,7 +136,7 @@ ptrdiff_t mew_tcpstream_native_read(void *data, char *buf, uintptr_t size) {
 
 ptrdiff_t mew_tcpstream_native_write(void *data, const char *buf, uintptr_t size) {
     int sd = (int)(uintptr_t)data;
-    return write(sd, buf, size);
+    return send(sd, buf, size, MSG_NOSIGNAL);
 }
 
 bool mew_tcpstream_native_sendfile(void *data, const char *path, uintptr_t size) {

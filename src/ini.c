@@ -2,6 +2,14 @@
 
 // TODO: nesting
 bool parse_ini(StringView text, Ini *ini) {
+    MewHashMapOptions map_options = {
+        .alloc = ini->alloc,
+        .user_data = ini,
+        .hashfunc = mew_hashmap_sv_hash,
+        .equals = mew_hashmap_sv_equals,
+        .key_size = sizeof(StringView),
+        .value_size = sizeof(IniSection),
+    };
     IniSection *current = NULL;
 
     while (text.count > 0) {
@@ -17,23 +25,33 @@ bool parse_ini(StringView text, Ini *ini) {
             if (line.items[line.count - 1] != ']')
                 return false;
             StringView section_name = sv_slice(line, 1, line.count - 2);
-            IniSection section = {
-                .name = sv_trim_space(section_name),
-                .items = {0},
+            section_name = sv_trim_space(section_name);
+
+            IniSection section;
+            MewHashMapOptions section_map_options = {
+                .alloc = ini->alloc,
+                .user_data = ini,
+                .hashfunc = mew_hashmap_sv_hash,
+                .equals = mew_hashmap_sv_equals,
+                .key_size = sizeof(StringView),
+                .value_size = sizeof(StringView),
             };
-            ARRAY_APPEND(&ini->sections, section, ini->alloc);
-            current = &ini->sections.items[ini->sections.count - 1];
+            mew_hashmap_init(&section.items, section_map_options);
+
+            mew_hashmap_insert(&ini->sections, &section_name, &section);
+
+            current = mew_hashmap_get(&ini->sections, &section_name);
         } else if (current == NULL) {
             return false;
         } else {
             StringView key = sv_trim_space(sv_chop_by(&line, '='));
             StringView value = sv_trim_space(line);
 
-            if (value.count == 0)
+            if (value.count == 0) {
                 return false;
+            }
 
-            IniItem item = {.key = key, .value = value};
-            ARRAY_APPEND(&current->items, item, ini->alloc);
+            mew_hashmap_insert(&current->items, &key, &value);
         }
     }
 
@@ -41,21 +59,9 @@ bool parse_ini(StringView text, Ini *ini) {
 }
 
 IniSection *ini_get_section(Ini ini, StringView name) {
-    for (size_t i = 0; i < ini.sections.count; i++) {
-        if (sv_eq_sv(ini.sections.items[i].name, name)) {
-            return &ini.sections.items[i];
-        }
-    }
-
-    return NULL;
+    return mew_hashmap_get(&ini.sections, &name);
 }
 
-IniItem *ini_get_item(IniSection section, StringView name) {
-    for (size_t i = 0; i < section.items.count; i++) {
-        if (sv_eq_sv(section.items.items[i].key, name)) {
-            return &section.items.items[i];
-        }
-    }
-
-    return NULL;
+StringView *ini_get_item(IniSection section, StringView name) {
+    return mew_hashmap_get(&section.items, &name);
 }

@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "mew/core/utils.h"
+#include <mew/core/utils.h>
 
 bool mew_fs_exists(const char *path) {
     struct stat s;

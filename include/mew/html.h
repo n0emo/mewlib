@@ -4,6 +4,7 @@
 #include <mew/core/strings.h>
 #include <mew/core/utils.h>
 #include <mew/core/allocators/arena.h>
+#include <mew/containers/vector.h>
 
 typedef struct {
     StringView name;
@@ -26,8 +27,8 @@ typedef struct {
     Arena arena;
     Allocator alloc;
     StringBuilder sb;
-    Attributes attributes;
-    Classes classes;
+    MewVector attributes;
+    MewVector classes;
     size_t indentation;
 } Html;
 

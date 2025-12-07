@@ -56,10 +56,15 @@ void sb_appendf(StringBuilder *sb, const char *fmt, ...) {
     int n = vsnprintf(NULL, 0, fmt, args_copy);
     va_end(args_copy);
 
-    char buf[n + 1];
-    vsprintf(buf, fmt, args);
+    usize buf_size = n + 1;
+    // TODO: We don't really need allocation *here*
+    char *buf = mem_alloc(sb->vec.alloc, buf_size);
+
+    vsnprintf(buf, buf_size, fmt, args);
     sb_append_cstr(sb, buf);
     va_end(args);
+
+    mem_free(sb->vec.alloc, buf);
 }
 
 StringBuilder sb_dup(Allocator alloc, StringBuilder sb) {

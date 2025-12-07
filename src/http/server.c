@@ -1,6 +1,5 @@
 #include <mew/http/server.h>
 
-#include <signal.h>
 #include <stdlib.h>
 
 #include <mew/core.h>
@@ -15,10 +14,11 @@ bool init_socket(HttpServer *server);
 bool accept_connection(HttpServer *server);
 int handle_connection(void *arg);
 
-bool http_server_init(HttpServer *server, HttpRouter router, HttpServerSettings settings) {
+bool http_server_init(HttpServer *server, HttpServerSettings settings) {
     bool result;
 
-    server->router = router;
+    server->handler = settings.handler;
+    server->user_data = settings.user_data;
     server->settings = settings;
     thrdpool_init(&server->thread_pool, 100);
     try(init_socket(server));
@@ -59,8 +59,6 @@ void http_server_destroy(HttpServer *server) {
 }
 
 bool http_server_start(HttpServer *server) {
-    signal(SIGPIPE, SIG_IGN);
-
     if (!mew_tcplistener_listen(server->listener, 100))
         return false;
 
@@ -110,7 +108,7 @@ static bool serve_request(ThreadData *data) {
     try(http_request_parse(&request, data->stream));
     http_headermap_insert_cstrs(&response.headers, "X-Frame-Options", "SAMEORIGIN");
     http_headermap_insert_cstrs(&response.headers, "Content-Security-Policy", "default-src 'self';");
-    try(http_router_handle(&data->server->router, &request, &response));
+    try(data->server->handler(&request, &response, data->server->user_data));
 
     try(http_response_write(&response, data->stream));
 

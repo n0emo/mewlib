@@ -51,7 +51,7 @@ bool mew_map_iterate(MewMap *map, MewMapIter iter, void *user_data);
 #define mew_t_map_destroy(K, V, map)                                                                                   \
     do {                                                                                                               \
         /* TODO: assert key and value size (or even type ID) */                                                        \
-        mew_map_destroy((MewMap *)map);                                                                                          \
+        mew_map_destroy((MewMap *)map);                                                                                \
     } while (0)
 
 #define mew_t_map_insert(K, V, map, key, value)                                                                        \
@@ -59,7 +59,7 @@ bool mew_map_iterate(MewMap *map, MewMapIter iter, void *user_data);
         /* TODO: assert key and value size (or even type ID) */                                                        \
         K mew_t_map_insert_key = key;                                                                                  \
         V mew_t_map_insert_value = value;                                                                              \
-        mew_map_insert((MewMap *)map, &mew_t_map_insert_key, &mew_t_map_insert_value);                                           \
+        mew_map_insert((MewMap *)map, &mew_t_map_insert_key, &mew_t_map_insert_value);                                 \
     } while (0)
 
 #define mew_t_map_pop(K, V, map, key, found_key, value, ok)                                                            \
@@ -68,26 +68,31 @@ bool mew_map_iterate(MewMap *map, MewMapIter iter, void *user_data);
         K mew_t_map_pop_key = key;                                                                                     \
         K *mew_t_map_pop_found_key = found_key;                                                                        \
         V *mew_t_map_pop_value = value;                                                                                \
-        *(ok) = mew_map_pop((MewMap *)map, &mew_t_map_pop_key, (void *)mew_t_map_pop_found_key, (void *)mew_t_map_pop_value);    \
+        *(ok) = mew_map_pop(                                                                                           \
+            (MewMap *)map,                                                                                             \
+            &mew_t_map_pop_key,                                                                                        \
+            (void *)mew_t_map_pop_found_key,                                                                           \
+            (void *)mew_t_map_pop_value                                                                                \
+        );                                                                                                             \
     } while (0)
 
 #define mew_t_map_get(K, V, map, key, result)                                                                          \
     do {                                                                                                               \
         /* TODO: assert key and value size (or even type ID) */                                                        \
         K mew_t_map_get_key = key;                                                                                     \
-        result = (V *)mew_map_get((MewMap *)map, &mew_t_map_get_key);                                                            \
+        result = (V *)mew_map_get((MewMap *)map, &mew_t_map_get_key);                                                  \
     } while (0)
 
 #define mew_t_map_iterate(K, V, map, iter, user_data, ok)                                                              \
     do {                                                                                                               \
         /* TODO: assert key and value size (or even type ID) */                                                        \
-        *(ok) = mew_map_iterate((MewMap *)map, iter, user_data);                                                                 \
+        *(ok) = mew_map_iterate((MewMap *)map, iter, user_data);                                                       \
     } while (0)
 
 #define mew_t_map_count(T, map, result)                                                                                \
     do {                                                                                                               \
         /* TODO: assert key and value size (or even type ID) */                                                        \
-        *result = mew_map_count((MewMap *)map);                                                                                  \
+        *result = mew_map_count((MewMap *)map);                                                                        \
     } while (0)
 
 #endif // MEW_INCLUDE_MEW_CONTAINERS_MAP_H_

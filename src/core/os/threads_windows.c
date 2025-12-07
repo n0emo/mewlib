@@ -26,6 +26,11 @@ MewThreadError mew_thread_join(MewThread thread, int *return_status) {
     MEW_FUNC_NOT_IMPLEMENTED();
 }
 
+MewThreadError mew_thread_detach(MewThread thread) {
+    (void)thread;
+    MEW_FUNC_NOT_IMPLEMENTED();
+}
+
 MewThreadError mew_mutex_init(MewMutex *mtx) {
     (void)mtx;
     MEW_FUNC_NOT_IMPLEMENTED();

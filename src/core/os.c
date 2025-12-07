@@ -7,3 +7,6 @@
     #include "os/socket_posix.c"
     #include "os/threads_posix.c"
 #endif
+
+#include "os/threads.c"
+#include "os/utils.c"

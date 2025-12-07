@@ -23,7 +23,7 @@ typedef struct HttpHeaderMapEntries {
 // TODO: multimap
 typedef struct {
     Allocator alloc;
-    HttpHeaderMapEntries entries;
+    MewVector entries;
     MewHashMap indices;
 } HttpHeaderMap;
 

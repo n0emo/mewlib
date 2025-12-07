@@ -10,35 +10,40 @@ enable_testing()
 add_subdirectory(tests)
 add_subdirectory(examples)
 
-add_compile_options(
-    -g
+set(CMAKE_C_STANDARD 11)
 
-    -Wall
-    -Wextra
-    -Werror
-    # TODO: Uncomment pedantic flag when the time comes
-    # -pedantic
-    -Wshadow
-    -Wimplicit
-    -Wconversion
-    -Wundef
-    -Wwrite-strings
-    -Wformat=2
-    -Wformat-security
-    -Warray-bounds
-    -Wnull-dereference
-    -fstack-protector-strong
+if(MSVC)
+    add_compile_options(
+        /W3
 
-    -Wstrict-prototypes
-    -Wmissing-prototypes
+    )
+else()
+    add_compile_options(
+        -g
 
-    # <$<NOT:$<CONFIG:Debug>>:-O2>
-    # $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>
-)
+        -Wall
+        -Wextra
+        -Werror
+        # TODO: Uncomment pedantic flag when the time comes
+        # -pedantic
+        -Wshadow
+        -Wimplicit
+        -Wconversion
+        -Wundef
+        -Wwrite-strings
+        -Wformat=2
+        -Wformat-security
+        -Warray-bounds
+        -Wnull-dereference
+        -fstack-protector-strong
+
+        -Wstrict-prototypes
+        -Wmissing-prototypes
+
+        <$<NOT:$<CONFIG:Debug>>:-O2>
+    )
+endif()
 
 add_library(mew STATIC ./src/all.c)
-
-# target_compile_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
-# target_link_options(mew PRIVATE $<$<CONFIG:Debug>:--coverage>)
 
 target_include_directories(mew PUBLIC ./include/)

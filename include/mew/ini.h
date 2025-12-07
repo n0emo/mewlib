@@ -4,21 +4,10 @@
 #include <mew/core/alloc.h>
 #include <mew/core/strings/sv.h>
 #include <mew/core/utils.h>
+#include <mew/containers/map/hashmap.h>
 
 typedef struct {
-    StringView key;
-    StringView value;
-} IniItem;
-
-typedef struct {
-    IniItem *items;
-    size_t count;
-    size_t capacity;
-} IniItems;
-
-typedef struct {
-    StringView name;
-    IniItems items;
+    MewHashMap items;
 } IniSection;
 
 typedef struct {
@@ -29,11 +18,11 @@ typedef struct {
 
 typedef struct {
     Allocator alloc;
-    IniSections sections;
+    MewHashMap sections;
 } Ini;
 
 bool parse_ini(StringView text, Ini *ini);
 IniSection *ini_get_section(Ini ini, StringView name);
-IniItem *ini_get_item(IniSection section, StringView name);
+StringView *ini_get_item(IniSection section, StringView name);
 
 #endif // MEW_INCLUDE_MEW_INI_H_

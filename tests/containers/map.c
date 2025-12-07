@@ -2,7 +2,7 @@
 #include <mew/unit.h>
 #include "mew/core/allocators/malloc.h"
 
-#define DEADBEEF ((void *)0xdeadbeef)
+#define DEADBEEF ((void *)0xdeadbeefull)
 
 #define MAP_GENERIC_TEST_LIST                                                                                          \
     MAP_X(test_map_insert)                                                                                             \
@@ -32,8 +32,8 @@ const char *test_map_insert(MewMap *map) {
 
     for (size_t i = 0; i < 1024; i++) {
         StringView key = cstr_to_sv(mem_sprintf(a, "Sample String %zu", i * 1337));
-        uint16_t value = i * 1337;
-        mew_map_insert(map, &key, &value);
+        uint64_t value = (uint64_t)i * 1337;
+        mew_map_insert(map, &key, (void *)&value);
     }
 
     mewassert("Map should have 1024 elements", map->count == 1024);
@@ -123,6 +123,7 @@ const char *test_map_insert_same_key(MewMap *map) {
 bool hashmap_iter_sum(void *key_arg, void *value_arg, void *user_data) {
     uint64_t *sum = user_data;
     const StringView *key = key_arg;
+    (void)key;
     const uint64_t *value = value_arg;
 
     *sum += *value;

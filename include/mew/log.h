@@ -1,6 +1,8 @@
 #ifndef MEW_INCLUDE_MEW_LOG_H_
 #define MEW_INCLUDE_MEW_LOG_H_
 
+#include <mew/core/os/macros.h>
+
 typedef enum {
     LOG_TRACE,
     LOG_DEBUG,
@@ -12,7 +14,11 @@ typedef enum {
 void log_init(void);
 
 const char *log_level_str(LogLevel level);
-void log_simple(LogLevel level, const char *format, ...) __attribute__((format(printf, 2, 3)));
+void log_simple(LogLevel level, MEW_FORMAT_STRING(const char *format), ...)
+#ifdef __GNUC__
+    __attribute__((format(printf, 2, 3)))
+#endif
+    ;
 
 #ifdef LOG_WITH_FILE
 void log_with_file(LogLevel level, const char *file, int line, const char *format, ...)

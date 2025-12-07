@@ -112,6 +112,7 @@ void *rbtree_remove(RBTree *tree, const void *element) {
     (void)tree;
     (void)element;
     assert(0 && "btree_remove is not implemented");
+    return NULL;
 }
 
 static void rbtree_iterate_ascending_impl(RBTree *tree, RBTreeNode *node, btree_iter_f_t *iter_f) {
