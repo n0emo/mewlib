@@ -56,7 +56,7 @@ void sb_appendf(StringBuilder *sb, const char *fmt, ...) {
     int n = vsnprintf(NULL, 0, fmt, args_copy);
     va_end(args_copy);
 
-    usize buf_size = n + 1;
+    usize buf_size = (usize)n + 1;
     // TODO: We don't really need allocation *here*
     char *buf = mem_alloc(sb->vec.alloc, buf_size);
 

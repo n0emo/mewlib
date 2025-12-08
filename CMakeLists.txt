@@ -12,6 +12,8 @@ add_subdirectory(examples)
 
 set(CMAKE_C_STANDARD 11)
 
+add_compile_options(-DLOG_WITH_FILE)
+
 if(MSVC)
     add_compile_options(/W3)
 else()
@@ -36,8 +38,6 @@ else()
 
         -Wstrict-prototypes
         -Wmissing-prototypes
-
-        <$<NOT:$<CONFIG:Debug>>:-O2>
     )
 endif()
 

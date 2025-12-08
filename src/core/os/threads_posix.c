@@ -29,7 +29,7 @@ MewThreadError mew_thread_create(MewThread *handle, mew_thread_func_t *func, voi
 
     ctx->func = func;
     ctx->user_arg = arg;
-    int result = pthread_create(&ctx->handle, NULL, &thread_func_wrapper, &ctx);
+    int result = pthread_create(&ctx->handle, NULL, &thread_func_wrapper, ctx);
 
     if (result == 0) {
         *handle = (MewThread)ctx->handle;

@@ -31,7 +31,6 @@ void mew_vec_reserve(MewVector *vec, size_t new_capacity) {
         vec->data = mem_calloc(vec->alloc, new_capacity, vec->element_size);
     } else {
         vec->data =
-            // TODO: mem_recalloc
             mem_realloc(vec->alloc, vec->data, vec->capacity * vec->element_size, new_capacity * vec->element_size);
     }
 
@@ -88,8 +87,6 @@ void mew_vec_push(MewVector *vec, const void *element) {
     memcpy(ptr, element, vec->element_size);
     vec->count++;
 }
-
-#include <stdio.h>
 
 void mew_vec_insert_at(MewVector *vec, const void *element, size_t index) {
     assert(vec != NULL);

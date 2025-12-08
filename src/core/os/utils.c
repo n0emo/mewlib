@@ -1,8 +1,6 @@
-#include <mew/core/utils.h>
+#include <mew/core/os/utils.h>
 
-#include <assert.h>
 #include <signal.h>
-#include <stdarg.h>
 
 #ifdef _WIN32
     #define WINDOWS_LEAN_AND_MEAN
@@ -10,11 +8,6 @@
 #else
     #include <unistd.h>
 #endif
-
-// TODO: port to Windows
-#include <signal.h>
-
-#include <mew/log.h>
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -30,9 +23,9 @@ void wait_for_ctrl_c(void) {
 
     while (!interrupted) {
 #ifdef _WIN32
-        Sleep(INFINITE);
+    Sleep(INFINITE);
 #else
-    #include <unistd.h>
+    pause();
 #endif
     }
 }

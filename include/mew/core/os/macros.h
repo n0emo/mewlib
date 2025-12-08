@@ -7,8 +7,7 @@
     #define MEW_ATTRIBUTE_UNUSED
 #endif
 
-#undef MEW_FORMAT_STRING
-#if _MSC_VER >= 1400
+#if defined(_MSC_VER) && _MSC_VER >= 1400
     #include <sal.h>
     #if _MSC_VER > 1400
         #define MEW_FORMAT_STRING(p) _Printf_format_string_ p

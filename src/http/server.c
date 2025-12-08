@@ -15,13 +15,20 @@ bool accept_connection(HttpServer *server);
 int handle_connection(void *arg);
 
 bool http_server_init(HttpServer *server, HttpServerSettings settings) {
-    bool result;
+    bool result = false;
 
     server->handler = settings.handler;
     server->user_data = settings.user_data;
     server->settings = settings;
-    thrdpool_init(&server->thread_pool, 100);
-    try(init_socket(server));
+    MewThreadError error = thrdpool_init(&server->thread_pool, 100);
+    if (error != MEW_THREAD_SUCCESS) {
+        log_error("%s", mew_thread_error_description(error));
+        goto defer;
+    }
+
+    if (!init_socket(server)) {
+        goto defer;
+    }
 
     return true;
 

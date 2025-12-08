@@ -42,3 +42,11 @@ bool try_serve_dir(HttpResponse *response, StringView file, StringView dir) {
 
     return true;
 }
+
+void serve_dir(HttpResponse *response, StringView file, StringView dir) {
+    if (try_serve_dir(response, file, dir)) {
+        response->status = HTTP_OK;
+    } else {
+        response->status = HTTP_NOT_FOUND;
+    }
+}

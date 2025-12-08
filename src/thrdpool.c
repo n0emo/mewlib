@@ -36,13 +36,13 @@ error:
 }
 
 MewThreadError queue_destroy(ThreadPoolQueue *queue) {
-    MewThreadError error = mew_mutex_destroy(&queue->mtx);
+    MewThreadError error = mew_mutex_destroy(queue->mtx);
     if (error != MEW_THREAD_SUCCESS) {
         return error;
     }
 
     // If mew_mutex_destroy succeeded, this cond destroying should also succeed
-    mew_cond_destroy(&queue->not_empty);
+    mew_cond_destroy(queue->not_empty);
 
     ThreadPoolJob *node = queue->first;
     ThreadPoolJob *next = NULL;
@@ -63,6 +63,7 @@ MewThreadError queue_push(ThreadPoolQueue *queue, ThreadPoolJob job) {
 
     ThreadPoolJob *node = malloc(sizeof(*node));
     memcpy(node, &job, sizeof(*node));
+    node->next = NULL;
 
     if (queue->count_ == 0) {
         queue->first = node;
@@ -106,6 +107,7 @@ MewThreadError queue_pop(ThreadPoolQueue *queue, ThreadPoolJob *result) {
 
     return MEW_THREAD_SUCCESS;
 }
+
 
 static int thread_func(void *arg) {
     MewThreadError error;
@@ -184,6 +186,11 @@ MewThreadError thrdpool_init(ThreadPool *pool, size_t thread_count) {
 
     memset(pool, 0, sizeof(*pool));
 
+    error = mew_mutex_init(&pool->mtx);
+    if (error != MEW_THREAD_SUCCESS) {
+        goto error;
+    }
+
     error = queue_init(&pool->queue);
     if (error != MEW_THREAD_SUCCESS) {
         goto error;
@@ -199,14 +206,22 @@ MewThreadError thrdpool_init(ThreadPool *pool, size_t thread_count) {
         }
     }
 
+    return MEW_THREAD_SUCCESS;
+
 error:
+    for (usize j = 0; j < i; j++) {
+        mew_thread_detach(pool->threads[j]);
+    }
+
     if (pool->threads != NULL) {
         free(pool->threads);
     }
 
-    for (usize j = 0; j < i; j++) {
-        mew_thread_detach(pool->threads[j]);
+    if (pool->mtx != NULL) {
+        mew_mutex_destroy(pool->mtx);
     }
+
+    queue_destroy(&pool->queue);
 
     return error;
 }
@@ -216,6 +231,7 @@ MewThreadError thrdpool_destroy(ThreadPool *pool) {
 
     error = mew_mutex_lock(pool->mtx);
     if (error != MEW_THREAD_SUCCESS) {
+        mew_mutex_unlock(pool->mtx);
         return error;
     }
 
@@ -223,13 +239,20 @@ MewThreadError thrdpool_destroy(ThreadPool *pool) {
     pool->cancel_ = true;
     mew_mutex_unlock(pool->mtx);
 
-    while (pool->threads_alive_ > 0) {
+notify:
+    mew_mutex_lock(pool->mtx);
+    usize alive = pool->threads_alive_;
+    mew_mutex_unlock(pool->mtx);
+    if (alive > 0) {
         mew_cond_notify_all(pool->queue.not_empty);
+        goto notify;
     }
+
     for (size_t i = 0; i < pool->thread_count_; i++) {
         int res;
         mew_thread_join(pool->threads[i], &res);
     }
+
     error = queue_destroy(&pool->queue);
     free(pool->threads);
     return error;

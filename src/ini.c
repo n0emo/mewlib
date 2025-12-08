@@ -10,6 +10,7 @@ bool parse_ini(StringView text, Ini *ini) {
         .key_size = sizeof(StringView),
         .value_size = sizeof(IniSection),
     };
+    mew_hashmap_init(&ini->sections, map_options);
     IniSection *current = NULL;
 
     while (text.count > 0) {

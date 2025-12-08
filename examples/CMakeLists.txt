@@ -10,3 +10,5 @@ define_example(html_attributes "html/attributes.c")
 
 define_example(containers_vector "containers/vector.c")
 define_example(containers_assocmap "containers/assocmap.c")
+
+define_example(http_file_server "http/file_server.c")

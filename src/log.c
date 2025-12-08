@@ -30,6 +30,10 @@ const char *log_level_str(LogLevel level) {
 }
 
 void log_simple(LogLevel level, const char *format, ...) {
+    if (MEW_LOG_MUTEX == NULL) {
+        log_init();
+    }
+
     FILE *stream = stdout;
     if (level == LOG_WARN || level == LOG_ERROR) {
         stream = stderr;
@@ -66,32 +70,41 @@ void log_simple(LogLevel level, const char *format, ...) {
 
     fprintf(stream, "\n");
 
-    mew_mutex_unlock(&MEW_LOG_MUTEX);
+    mew_mutex_unlock(MEW_LOG_MUTEX);
 }
 
 #ifdef LOG_WITH_FILE
 void log_with_file(LogLevel level, const char *file, int line, const char *format, ...) {
+    if (MEW_LOG_MUTEX == NULL) {
+        log_init();
+    }
+
     FILE *stream = stdout;
     if (level == LOG_WARN || level == LOG_ERROR) {
         stream = stderr;
     }
 
-    // TODO: consider timed lock
-    pthread_mutex_lock(&MEW_LOG_MUTEX);
-    time_t my_time;
-    struct tm *timeinfo;
-    time(&my_time);
-    timeinfo = localtime(&my_time);
+    time_t timer;
+    struct tm timeinfo;
+    time(&timer);
 
+    // TODO: consider timed lock
+#ifdef _WIN32
+    localtime_s(&timeinfo, &timer);
+#else
+    localtime_r(&timer, &timeinfo);
+#endif
+
+    mew_mutex_lock(MEW_LOG_MUTEX);
     fprintf(
         stream,
         "[%04d:%02d:%02d %02d:%02d:%02d] %s %s:%d: ",
-        timeinfo->tm_year + 1900,
-        timeinfo->tm_mon + 1,
-        timeinfo->tm_mday,
-        timeinfo->tm_hour,
-        timeinfo->tm_min,
-        timeinfo->tm_sec,
+        timeinfo.tm_year + 1900,
+        timeinfo.tm_mon + 1,
+        timeinfo.tm_mday,
+        timeinfo.tm_hour,
+        timeinfo.tm_min,
+        timeinfo.tm_sec,
         log_level_str(level),
         file,
         line
@@ -103,6 +116,6 @@ void log_with_file(LogLevel level, const char *file, int line, const char *forma
     va_end(args);
 
     fprintf(stream, "\n");
-    pthread_mutex_unlock(&MEW_LOG_MUTEX);
+    mew_mutex_unlock(MEW_LOG_MUTEX);
 }
 #endif
