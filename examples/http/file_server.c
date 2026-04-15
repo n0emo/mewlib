@@ -22,6 +22,7 @@ int main(void) {
 
 bool handler(HttpRequest *request, HttpResponse *response, void *user_data) {
     serve_dir(response, request->resource_path, cstr_to_sv("."));
+
     log_info(
         "%s " SV_FMT ": %d",
         http_method_str(request->method),

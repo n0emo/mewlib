@@ -114,7 +114,7 @@ static bool serve_request(ThreadData *data) {
 
     try(http_request_parse(&request, data->stream));
     http_headermap_insert_cstrs(&response.headers, "X-Frame-Options", "SAMEORIGIN");
-    http_headermap_insert_cstrs(&response.headers, "Content-Security-Policy", "default-src 'self';");
+    // http_headermap_insert_cstrs(&response.headers, "Content-Security-Policy", "default-src 'self';");
     try(data->server->handler(&request, &response, data->server->user_data));
 
     try(http_response_write(&response, data->stream));

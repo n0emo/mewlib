@@ -12,6 +12,16 @@ bool mew_fs_exists(const char *path) {
     return stat(path, &s) == 0;
 }
 
+bool mew_fs_is_dir(const char *path) {
+
+    struct stat s;
+    if (stat(path, &s) != 0) {
+        return false;
+    }
+
+    return s.st_mode & S_IFDIR;
+}
+
 bool mew_fs_get_size(const char *path, uintptr_t *size) {
     struct stat s;
     if (stat(path, &s) != 0) {

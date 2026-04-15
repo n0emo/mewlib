@@ -4,20 +4,26 @@
 
 #include <mew/core.h>
 
-bool try_serve_dir(HttpResponse *response, StringView file, StringView dir) {
-    if (file.items[0] == '/')
+ServeResult try_serve_dir(HttpResponse *response, StringView file, StringView dir) {
+    if (file.items[0] == '/') {
         file = sv_slice_from(file, 1);
+    }
 
     char *path = mem_sprintf(response->body.alloc, SV_FMT "/" SV_FMT, SV_ARG(dir), SV_ARG(file));
 
     if (strncmp(path, "../", 3) == 0 || strncmp(path + strlen(path) - 3, "/..", 3) == 0
         || strstr(path, "/../") != NULL) {
-        return false;
+        return MEW_SERVE_NOT_FOUND;
     }
 
     uintptr_t size;
-    if (!mew_fs_get_size(path, &size))
-        return false;
+    if (!mew_fs_get_size(path, &size)) {
+        return MEW_SERVE_NOT_FOUND;
+    }
+
+    if (mew_fs_is_dir(path)) {
+        return MEW_SERVE_IS_DIR;
+    }
 
     StringView sv = cstr_to_sv(path);
     ptrdiff_t i = sv_last_index_char(sv, '.');
@@ -40,7 +46,7 @@ bool try_serve_dir(HttpResponse *response, StringView file, StringView dir) {
 
     http_response_body_set_sendfile(response, (ResponseSendFile) {path, size});
 
-    return true;
+    return MEW_SERVE_SUCCESS;
 }
 
 void serve_dir(HttpResponse *response, StringView file, StringView dir) {

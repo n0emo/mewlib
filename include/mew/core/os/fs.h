@@ -5,6 +5,7 @@
 #include <mew/core/strings/sb.h>
 
 bool mew_fs_exists(const char *path);
+bool mew_fs_is_dir(const char *path);
 bool mew_fs_get_size(const char *path, usize *size);
 bool mew_fs_read_file_to_sb(const char *path, StringBuilder *asb);
 

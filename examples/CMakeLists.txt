@@ -12,3 +12,4 @@ define_example(containers_vector "containers/vector.c")
 define_example(containers_assocmap "containers/assocmap.c")
 
 define_example(http_file_server "http/file_server.c")
+define_example(http_directory_listing "http/directory_listing.c")
